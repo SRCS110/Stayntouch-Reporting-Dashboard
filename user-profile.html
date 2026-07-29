@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hotel Dashboard — Property Profile</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+/* ── Design tokens (mirrors main dashboard) ── */
+:root{
+  --ink:#1B2430; --ink-soft:#4A5568; --paper:#F7F4EE; --card:#FFFFFF;
+  --line:#E4DFD3; --brass:#A9793C; --brass-soft:#D9C39A;
+  --good:#2F6B4F; --bad:#B4483C; --radius:10px;
+}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:'Inter',system-ui,sans-serif;-webkit-font-smoothing:antialiased;}
+
+/* ── Header ── */
+.app-header{
+  background:var(--card);border-bottom:1px solid var(--line);
+  padding:0 32px;display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;
+}
+.app-header .brand{display:flex;align-items:baseline;gap:14px;padding:18px 0;}
+.app-header h1{font-family:'Fraunces',serif;font-weight:600;font-size:1.45rem;margin:0;letter-spacing:-0.01em;}
+.back-link{
+  display:inline-flex;align-items:center;gap:7px;font-size:0.82rem;font-weight:600;
+  color:var(--ink-soft);text-decoration:none;padding:8px 14px;border:1px solid var(--line);
+  border-radius:6px;background:var(--card);transition:background .12s,border-color .12s;
+}
+.back-link:hover{background:#F1ECDF;border-color:var(--brass-soft);color:var(--ink);}
+
+/* ── Layout ── */
+.page{max-width:780px;margin:0 auto;padding:40px 28px 80px;}
+.page-title{font-family:'Fraunces',serif;font-weight:600;font-size:1.6rem;margin:0 0 4px;}
+.page-sub{color:var(--ink-soft);font-size:0.9rem;margin:0 0 36px;}
+
+/* ── Section cards ── */
+.section-card{
+  background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+  padding:24px 26px;margin-bottom:24px;
+}
+.section-card h2{
+  font-family:'Fraunces',serif;font-weight:600;font-size:1.05rem;margin:0 0 4px;
+}
+.section-card .section-sub{color:var(--ink-soft);font-size:0.82rem;margin:0 0 20px;display:block;}
+
+/* ── Form fields ── */
+.field-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+@media(max-width:560px){.field-grid{grid-template-columns:1fr;}}
+.field-grid.single{grid-template-columns:1fr;}
+.field{display:flex;flex-direction:column;gap:6px;}
+.field label{
+  font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;
+  color:var(--ink-soft);font-weight:600;
+}
+.field input,.field select,.field textarea{
+  padding:10px 12px;border:1px solid var(--line);border-radius:6px;
+  font-family:'Inter',sans-serif;font-size:0.9rem;background:#FCFBF8;color:var(--ink);
+  transition:border-color .15s;
+}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--brass);}
+.field textarea{resize:vertical;min-height:70px;}
+.field .hint{font-size:0.72rem;color:var(--ink-soft);}
+
+/* ── Buttons ── */
+button{font-family:'Inter',sans-serif;font-weight:600;font-size:0.85rem;border-radius:6px;border:none;padding:10px 20px;cursor:pointer;transition:opacity .15s;}
+button:hover{opacity:0.82;}
+.btn-primary{background:var(--ink);color:#fff;}
+.btn-ghost{background:transparent;color:var(--ink-soft);border:1px solid var(--line);}
+.btn-danger{background:#FBF0EE;color:var(--bad);border:1px solid #E8C4C0;}
+
+/* ── Profile switcher ── */
+.profile-bar{
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:28px;
+}
+.profile-select-wrap{position:relative;flex:1;min-width:200px;max-width:340px;}
+.profile-select-wrap select{
+  width:100%;padding:10px 36px 10px 12px;border:1px solid var(--line);border-radius:6px;
+  font-family:'Inter',sans-serif;font-size:0.9rem;background:#FCFBF8;color:var(--ink);
+  appearance:none;-webkit-appearance:none;cursor:pointer;
+}
+.profile-select-wrap select:focus{outline:none;border-color:var(--brass);}
+.profile-select-wrap::after{
+  content:'▾';position:absolute;right:12px;top:50%;transform:translateY(-50%);
+  color:var(--ink-soft);pointer-events:none;font-size:0.85rem;
+}
+
+/* ── Status / save feedback ── */
+.save-bar{
+  display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+  padding:14px 18px;background:#FFFBF3;border:1px solid var(--brass-soft);
+  border-radius:8px;margin-top:20px;
+}
+.save-bar .save-msg{font-size:0.82rem;color:var(--ink-soft);flex:1;}
+.save-bar .save-msg.ok{color:var(--good);}
+.save-bar .save-msg.err{color:var(--bad);}
+
+/* ── Profile data summary ── */
+.summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px;}
+@media(max-width:560px){.summary-grid{grid-template-columns:repeat(2,1fr);}}
+.summary-pill{
+  background:#FFFBF3;border:1px solid var(--brass-soft);border-radius:8px;padding:12px 14px;
+}
+.summary-pill .sp-label{font-size:0.65rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-soft);margin-bottom:4px;}
+.summary-pill .sp-val{font-family:'Fraunces',serif;font-size:1.15rem;font-weight:500;word-break:break-word;}
+.summary-pill .sp-val.empty{color:var(--ink-soft);font-size:0.85rem;font-family:'Inter',sans-serif;}
+
+/* ── Data management section ── */
+.storage-table{width:100%;border-collapse:collapse;font-size:0.85rem;margin-top:6px;}
+.storage-table th{
+  text-align:left;font-size:0.67rem;text-transform:uppercase;letter-spacing:0.05em;
+  color:var(--ink-soft);padding:7px 10px;border-bottom:1px solid var(--line);
+}
+.storage-table td{padding:9px 10px;border-bottom:1px solid #EFEBE1;font-family:'IBM Plex Mono',monospace;font-size:0.82rem;}
+.storage-table td:first-child{font-family:'Inter',sans-serif;font-weight:500;}
+.storage-table .badge-yes{color:var(--good);}
+.storage-table .badge-no{color:var(--ink-soft);}
+.clear-row-btn{padding:3px 9px;font-size:0.72rem;}
+
+/* ── Divider ── */
+.divider{border:none;border-top:1px solid var(--line);margin:20px 0;}
+
+/* ── Toast ── */
+#toast{
+  position:fixed;bottom:28px;right:28px;z-index:999;
+  background:var(--ink);color:#fff;font-size:0.82rem;font-family:'Inter',sans-serif;
+  padding:12px 18px;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,0.2);
+  opacity:0;transform:translateY(8px);transition:opacity .25s,transform .25s;pointer-events:none;
+}
+#toast.show{opacity:1;transform:translateY(0);}
+</style>
+</head>
+<body>
+
+<!-- ── Header ── -->
+<div class="app-header">
+  <div class="brand">
+    <h1>Hotel Dashboard</h1>
+  </div>
+  <a class="back-link" href="index.html">← Back to dashboard</a>
+</div>
+
+<!-- ── Main content ── -->
+<div class="page">
+  <p class="page-title">Property Profile</p>
+  <p class="page-sub">Settings saved here persist in your browser and are automatically loaded by the main dashboard — no need to re-enter them on every visit.</p>
+
+  <!-- ── Profile selector ── -->
+  <div class="section-card">
+    <h2>Active Profile</h2>
+    <span class="section-sub">Each profile stores its own settings independently. Switch between properties without losing data.</span>
+    <div class="profile-bar">
+      <div class="profile-select-wrap">
+        <select id="profileSelect"></select>
+      </div>
+      <button class="btn-primary" id="newProfileBtn">+ New profile</button>
+      <button class="btn-danger" id="deleteProfileBtn">Delete this profile</button>
+    </div>
+    <!-- Active profile summary pills -->
+    <div class="summary-grid" id="summaryGrid"></div>
+  </div>
+
+  <!-- ── Property details ── -->
+  <div class="section-card">
+    <h2>Property Details</h2>
+    <span class="section-sub">Basic information about this property. Displayed in the dashboard header area.</span>
+    <div class="field-grid">
+      <div class="field">
+        <label for="propName">Property name</label>
+        <input type="text" id="propName" placeholder="e.g. The Grand Harbor Hotel">
+      </div>
+      <div class="field">
+        <label for="propBrand">Brand / chain (optional)</label>
+        <input type="text" id="propBrand" placeholder="e.g. Marriott Autograph Collection">
+      </div>
+      <div class="field">
+        <label for="propCity">City</label>
+        <input type="text" id="propCity" placeholder="e.g. San Francisco">
+      </div>
+      <div class="field">
+        <label for="propState">State / region</label>
+        <input type="text" id="propState" placeholder="e.g. CA">
+      </div>
+    </div>
+    <div class="field-grid single" style="margin-top:16px;">
+      <div class="field">
+        <label for="propNotes">Notes (optional)</label>
+        <textarea id="propNotes" placeholder="Any notes about this property — seasonal flags, renovation periods, etc."></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Room configuration ── -->
+  <div class="section-card">
+    <h2>Room Configuration</h2>
+    <span class="section-sub">Used across the dashboard to calculate RevPAR and available room-nights.</span>
+    <div class="field-grid">
+      <div class="field">
+        <label for="totalRooms">Total rooms in property</label>
+        <input type="number" id="totalRooms" min="1" placeholder="e.g. 120">
+        <span class="hint">This is the single most important setting — it unlocks RevPAR in every tab.</span>
+      </div>
+      <div class="field">
+        <label for="roomTypes">Room type breakdown (optional)</label>
+        <input type="text" id="roomTypes" placeholder="e.g. 80 Standard, 30 Deluxe, 10 Suite">
+        <span class="hint">Informational only — for your reference.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Revenue & reporting settings ── -->
+  <div class="section-card">
+    <h2>Revenue & Reporting</h2>
+    <span class="section-sub">Controls how revenue figures are labelled and compared in reports.</span>
+    <div class="field-grid">
+      <div class="field">
+        <label for="currency">Currency symbol</label>
+        <select id="currency">
+          <option value="$">$ — US Dollar</option>
+          <option value="€">€ — Euro</option>
+          <option value="£">£ — British Pound</option>
+          <option value="C$">C$ — Canadian Dollar</option>
+          <option value="A$">A$ — Australian Dollar</option>
+          <option value="¥">¥ — Japanese Yen</option>
+          <option value="CHF">CHF — Swiss Franc</option>
+          <option value="MXN">MXN — Mexican Peso</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="fiscalYearStart">Fiscal year start month</label>
+        <select id="fiscalYearStart">
+          <option value="1">January</option>
+          <option value="2">February</option>
+          <option value="3">March</option>
+          <option value="4">April</option>
+          <option value="5">May</option>
+          <option value="6">June</option>
+          <option value="7">July</option>
+          <option value="8">August</option>
+          <option value="9">September</option>
+          <option value="10">October</option>
+          <option value="11">November</option>
+          <option value="12">December</option>
+        </select>
+        <span class="hint">Used for YTD calculations. Most hotels use January.</span>
+      </div>
+      <div class="field">
+        <label for="revenueSources">Primary revenue sources (optional)</label>
+        <input type="text" id="revenueSources" placeholder="e.g. Rooms, F&B, Parking, Spa">
+        <span class="hint">Comma-separated. For reference only.</span>
+      </div>
+      <div class="field">
+        <label for="compSet">Comp set (optional)</label>
+        <input type="text" id="compSet" placeholder="e.g. Hotel A, Hotel B, Hotel C">
+        <span class="hint">Comma-separated competitor names for your records.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Google Drive settings ── -->
+  <div class="section-card">
+    <h2>Google Drive Folders</h2>
+    <span class="section-sub">Pre-fill the folder names used by the Google Drive sync tab so you don't have to re-enter them each time.</span>
+    <div class="field-grid">
+      <div class="field">
+        <label for="driveFolderCurrent">Current BotB folder name</label>
+        <input type="text" id="driveFolderCurrent" placeholder="e.g. Hotel PMS Exports">
+        <span class="hint">Live Business on the Books — re-imported on every sync.</span>
+      </div>
+      <div class="field">
+        <label for="driveFolderHistorical">Historical BotB folder name</label>
+        <input type="text" id="driveFolderHistorical" placeholder="e.g. Hotel Historical Reports">
+        <span class="hint">Prior-year actuals — imported once, never re-fetched.</span>
+      </div>
+      <div class="field">
+        <label for="driveFolderProduction">Production by Rate folder name</label>
+        <input type="text" id="driveFolderProduction" placeholder="e.g. Hotel Channel Production">
+        <span class="hint">Weekly channel production snapshots.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Save button ── -->
+  <div class="save-bar">
+    <span class="save-msg" id="saveMsg">Changes are not yet saved.</span>
+    <button class="btn-primary" id="saveBtn">Save profile</button>
+    <button class="btn-ghost" id="resetBtn">Discard changes</button>
+  </div>
+
+  <hr class="divider" style="margin:36px 0 28px;">
+
+  <!-- ── Data overview ── -->
+  <div class="section-card">
+    <h2>Stored Data Overview</h2>
+    <span class="section-sub">All data lives in your browser's localStorage under the <code style="font-family:'IBM Plex Mono',monospace;font-size:0.82em;background:#F3F0EA;padding:1px 5px;border-radius:3px;">hd_</code> prefix. Nothing is sent to any server.</span>
+    <table class="storage-table" id="storageTable">
+      <thead>
+        <tr>
+          <th>Data type</th>
+          <th>Records stored</th>
+          <th>Size</th>
+          <th>Last updated</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="storageBody"></tbody>
+    </table>
+    <div style="margin-top:18px;display:flex;gap:10px;flex-wrap:wrap;">
+      <button class="btn-primary" id="exportBtn">Export all data (JSON)</button>
+      <button class="btn-ghost" id="importBtn">Import from backup</button>
+      <input type="file" id="importFile" accept=".json" style="display:none;">
+    </div>
+    <div class="form-msg" id="dataMsg" style="font-size:0.8rem;margin-top:10px;color:var(--ink-soft);min-height:1.1em;"></div>
+  </div>
+
+</div><!-- /page -->
+
+<!-- Toast notification -->
+<div id="toast"></div>
+
+<script>
+/* ═══════════════════════════════════════════════════════
+   STORAGE — mirrors the main dashboard's polyfill
+   All keys under 'hd_' prefix in localStorage
+═══════════════════════════════════════════════════════ */
+const LS = {
+  get(k){ try{ const v=localStorage.getItem('hd_'+k); return v===null?null:v; }catch(e){return null;} },
+  set(k,v){ try{ localStorage.setItem('hd_'+k,v); return true; }catch(e){return false;} },
+  del(k){ try{ localStorage.removeItem('hd_'+k); return true; }catch(e){return false;} },
+  keys(prefix=''){ try{ return Object.keys(localStorage).filter(k=>k.startsWith('hd_'+prefix)).map(k=>k.slice(3)); }catch(e){return[];} },
+  size(k){ try{ const v=localStorage.getItem('hd_'+k); return v?new Blob([v]).size:0; }catch(e){return 0;} }
+};
+
+/* ═══════════════════════════════════════════════════════
+   PROFILE SYSTEM
+   Profiles stored as: hd_profiles  (array of {id, name})
+                        hd_profile_{id}  (profile data object)
+                        hd_activeProfile (current profile id)
+═══════════════════════════════════════════════════════ */
+
+function loadProfileList(){
+  const raw = LS.get('profiles');
+  return raw ? JSON.parse(raw) : [];
+}
+function saveProfileList(list){ LS.set('profiles', JSON.stringify(list)); }
+
+function loadProfileData(id){
+  const raw = LS.get('profile_'+id);
+  return raw ? JSON.parse(raw) : null;
+}
+function saveProfileData(id, data){ LS.set('profile_'+id, JSON.stringify(data)); }
+function deleteProfileData(id){ LS.del('profile_'+id); }
+
+function getActiveProfileId(){
+  return LS.get('activeProfile') || null;
+}
+function setActiveProfileId(id){
+  LS.set('activeProfile', id);
+}
+
+function genId(){
+  return Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+}
+
+/* ── Sync a profile's settings into the main dashboard keys ── */
+function applyProfileToDashboard(data){
+  if(!data) return;
+
+  // The key the main dashboard reads: hd_settings → { rooms: N }
+  const existing = LS.get('settings');
+  const settings = existing ? JSON.parse(existing) : {};
+  if(data.totalRooms) settings.rooms = parseInt(data.totalRooms, 10);
+  LS.set('settings', JSON.stringify(settings));
+
+  // Drive folder names — written to same keys the main dashboard reads
+  if(data.driveFolderCurrent !== undefined){
+    // These are read back by the Drive tab on load via localStorage directly
+    LS.set('driveFolderCurrent', data.driveFolderCurrent);
+    LS.set('driveFolderHistorical', data.driveFolderHistorical || '');
+    LS.set('driveFolderProduction', data.driveFolderProduction || '');
+  }
+}
+
+/* ═══════════════════════════════════════════════════════
+   FORM ↔ STATE
+═══════════════════════════════════════════════════════ */
+const FIELDS = [
+  'propName','propBrand','propCity','propState','propNotes',
+  'totalRooms','roomTypes',
+  'currency','fiscalYearStart','revenueSources','compSet',
+  'driveFolderCurrent','driveFolderHistorical','driveFolderProduction'
+];
+
+function readForm(){
+  const d={};
+  FIELDS.forEach(id=>{ d[id]=document.getElementById(id)?.value||''; });
+  return d;
+}
+
+function writeForm(data){
+  FIELDS.forEach(id=>{
+    const el=document.getElementById(id);
+    if(el && data[id]!==undefined) el.value=data[id];
+  });
+}
+
+function clearForm(){
+  FIELDS.forEach(id=>{
+    const el=document.getElementById(id);
+    if(el){ if(el.tagName==='SELECT') el.selectedIndex=0; else el.value=''; }
+  });
+  // Reset selects to defaults
+  document.getElementById('currency').value='$';
+  document.getElementById('fiscalYearStart').value='1';
+}
+
+/* ═══════════════════════════════════════════════════════
+   SUMMARY PILLS
+═══════════════════════════════════════════════════════ */
+function renderSummary(data){
+  const grid = document.getElementById('summaryGrid');
+  const pills = [
+    { label:'Property', val: data?.propName || '' },
+    { label:'Location', val: [data?.propCity, data?.propState].filter(Boolean).join(', ') },
+    { label:'Total Rooms', val: data?.totalRooms || '' },
+    { label:'Currency', val: data?.currency || '$' },
+    { label:'Fiscal Year Start', val: data?.fiscalYearStart
+        ? new Date(2000, parseInt(data.fiscalYearStart)-1, 1).toLocaleString('default',{month:'long'})
+        : 'January' },
+    { label:'Drive Connected', val: data?.driveFolderCurrent ? 'Folder set' : '' },
+  ];
+  grid.innerHTML = pills.map(p=>`
+    <div class="summary-pill">
+      <div class="sp-label">${p.label}</div>
+      <div class="sp-val ${p.val?'':'empty'}">${p.val || 'Not set'}</div>
+    </div>
+  `).join('');
+}
+
+/* ═══════════════════════════════════════════════════════
+   PROFILE SELECT DROPDOWN
+═══════════════════════════════════════════════════════ */
+function renderProfileSelect(activeId){
+  const sel = document.getElementById('profileSelect');
+  const list = loadProfileList();
+  sel.innerHTML = '';
+  if(!list.length){
+    sel.innerHTML = '<option value="">No profiles yet</option>';
+    return;
+  }
+  list.forEach(p=>{
+    const o = document.createElement('option');
+    o.value = p.id;
+    o.textContent = p.name || 'Unnamed property';
+    if(p.id === activeId) o.selected = true;
+    sel.appendChild(o);
+  });
+}
+
+/* ═══════════════════════════════════════════════════════
+   STORAGE TABLE
+═══════════════════════════════════════════════════════ */
+const DATA_KEYS = [
+  { key:'settings',   label:'Property settings (rooms, etc.)',  isArray:false },
+  { key:'entries',    label:'Monthly actuals',                  isArray:true  },
+  { key:'pace',       label:'Pace snapshots',                   isArray:true  },
+  { key:'daily',      label:'Daily entries (calendar)',         isArray:true  },
+  { key:'finBudget',  label:'Financial budget',                 isArray:true  },
+  { key:'finActuals', label:'Financial actuals',                isArray:true  },
+  { key:'prodWeeks',  label:'Channel production weeks',         isArray:true  },
+];
+
+function formatBytes(bytes){
+  if(bytes===0) return '—';
+  if(bytes<1024) return bytes+'B';
+  return (bytes/1024).toFixed(1)+'KB';
+}
+
+function renderStorageTable(){
+  const body = document.getElementById('storageBody');
+  body.innerHTML = '';
+  DATA_KEYS.forEach(({key,label,isArray})=>{
+    const raw = LS.get(key);
+    const size = LS.size(key);
+    let count = '—', lastUpdated = '—';
+    if(raw){
+      try{
+        const parsed = JSON.parse(raw);
+        if(isArray && Array.isArray(parsed)) count = `${parsed.length} record${parsed.length===1?'':'s'}`;
+        else if(!isArray) count = 'Saved';
+      }catch(e){ count='(corrupt)'; }
+    } else {
+      count = '<span class="badge-no">Not set</span>';
+    }
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${label}</td>
+      <td>${raw?`<span class="badge-yes">${count}</span>`:count}</td>
+      <td>${formatBytes(size)}</td>
+      <td>—</td>
+      <td><button class="btn-ghost clear-row-btn" data-key="${key}">Clear</button></td>
+    `;
+    body.appendChild(tr);
+  });
+
+  // Wire clear buttons
+  body.querySelectorAll('[data-key]').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const k = btn.dataset.key;
+      const label = DATA_KEYS.find(d=>d.key===k)?.label || k;
+      if(confirm(`Clear all "${label}" data? This cannot be undone.`)){
+        LS.del(k);
+        renderStorageTable();
+        showToast(`"${label}" cleared.`);
+        document.getElementById('dataMsg').textContent = `Cleared: ${label}`;
+      }
+    });
+  });
+}
+
+/* ═══════════════════════════════════════════════════════
+   TOAST
+═══════════════════════════════════════════════════════ */
+let _toastTimer;
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(()=>t.classList.remove('show'), 3000);
+}
+
+/* ═══════════════════════════════════════════════════════
+   SAVE MSG
+═══════════════════════════════════════════════════════ */
+function setSaveMsg(msg, type=''){
+  const el = document.getElementById('saveMsg');
+  el.textContent = msg;
+  el.className = 'save-msg' + (type?' '+type:'');
+}
+
+/* ═══════════════════════════════════════════════════════
+   EXPORT / IMPORT
+═══════════════════════════════════════════════════════ */
+document.getElementById('exportBtn').addEventListener('click',()=>{
+  const backup = {};
+  DATA_KEYS.forEach(({key})=>{ const v=LS.get(key); if(v) backup[key]=JSON.parse(v); });
+  // Include active profile
+  const activeId = getActiveProfileId();
+  if(activeId){
+    backup['_profile'] = loadProfileData(activeId);
+    backup['_profileId'] = activeId;
+  }
+  backup['_exportedAt'] = new Date().toISOString();
+  const blob = new Blob([JSON.stringify(backup, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url;
+  const d = new Date(); const pad = n=>String(n).padStart(2,'0');
+  a.download = `hotel-dashboard-backup-${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}.json`;
+  a.click(); URL.revokeObjectURL(url);
+  showToast('Data exported successfully.');
+});
+
+document.getElementById('importBtn').addEventListener('click',()=>{
+  document.getElementById('importFile').click();
+});
+document.getElementById('importFile').addEventListener('change', ev=>{
+  const file = ev.target.files[0]; if(!file) return;
+  const reader = new FileReader();
+  const msg = document.getElementById('dataMsg');
+  reader.onload = ()=>{
+    try{
+      const backup = JSON.parse(reader.result);
+      let count=0;
+      DATA_KEYS.forEach(({key})=>{
+        if(backup[key]!==undefined){ LS.set(key, JSON.stringify(backup[key])); count++; }
+      });
+      renderStorageTable();
+      msg.textContent = `✓ Restored ${count} data types from backup (exported ${backup._exportedAt||'unknown date'}).`;
+      showToast('Backup restored successfully.');
+    }catch(e){
+      msg.textContent = 'Error reading backup file: '+e.message;
+    }
+    ev.target.value='';
+  };
+  reader.readAsText(file);
+});
+
+/* ═══════════════════════════════════════════════════════
+   MARK UNSAVED on any input change
+═══════════════════════════════════════════════════════ */
+FIELDS.forEach(id=>{
+  const el = document.getElementById(id);
+  if(el) el.addEventListener('input',()=>setSaveMsg('You have unsaved changes.'));
+});
+
+/* ═══════════════════════════════════════════════════════
+   MAIN INIT
+═══════════════════════════════════════════════════════ */
+function init(){
+  let list = loadProfileList();
+  let activeId = getActiveProfileId();
+
+  // ── Bootstrap: if no profiles exist, auto-create one from existing dashboard data ──
+  if(!list.length){
+    const existingSettings = LS.get('settings');
+    const rooms = existingSettings ? JSON.parse(existingSettings).rooms : null;
+    const defaultProfile = {
+      id: genId(),
+      name: 'My Property',
+      propName: '', propBrand: '', propCity: '', propState: '', propNotes: '',
+      totalRooms: rooms ? String(rooms) : '',
+      roomTypes: '',
+      currency: '$', fiscalYearStart: '1', revenueSources: '', compSet: '',
+      driveFolderCurrent: LS.get('driveFolderCurrent') || '',
+      driveFolderHistorical: LS.get('driveFolderHistorical') || '',
+      driveFolderProduction: LS.get('driveFolderProduction') || '',
+      createdAt: new Date().toISOString()
+    };
+    list = [{ id: defaultProfile.id, name: defaultProfile.name }];
+    saveProfileList(list);
+    saveProfileData(defaultProfile.id, defaultProfile);
+    activeId = defaultProfile.id;
+    setActiveProfileId(activeId);
+  }
+
+  // ── Ensure activeId is valid ──
+  if(!activeId || !list.find(p=>p.id===activeId)){
+    activeId = list[0]?.id || null;
+    if(activeId) setActiveProfileId(activeId);
+  }
+
+  renderProfileSelect(activeId);
+  const data = activeId ? loadProfileData(activeId) : null;
+  if(data){ writeForm(data); renderSummary(data); }
+  else { clearForm(); renderSummary(null); }
+
+  setSaveMsg('Profile loaded. Make changes and save.');
+  renderStorageTable();
+}
+
+/* ── Profile select change ── */
+document.getElementById('profileSelect').addEventListener('change', function(){
+  const id = this.value;
+  setActiveProfileId(id);
+  const data = loadProfileData(id);
+  if(data){ writeForm(data); renderSummary(data); }
+  else { clearForm(); renderSummary(null); }
+  setSaveMsg('Profile loaded. Make changes and save.');
+});
+
+/* ── New profile ── */
+document.getElementById('newProfileBtn').addEventListener('click',()=>{
+  const name = prompt('Name for the new property profile:', 'New Property');
+  if(!name) return;
+  const id = genId();
+  const newProfile = {
+    id, name,
+    propName: name, propBrand: '', propCity: '', propState: '', propNotes: '',
+    totalRooms: '', roomTypes: '',
+    currency: '$', fiscalYearStart: '1', revenueSources: '', compSet: '',
+    driveFolderCurrent: '', driveFolderHistorical: '', driveFolderProduction: '',
+    createdAt: new Date().toISOString()
+  };
+  const list = loadProfileList();
+  list.push({ id, name });
+  saveProfileList(list);
+  saveProfileData(id, newProfile);
+  setActiveProfileId(id);
+  renderProfileSelect(id);
+  clearForm();
+  writeForm(newProfile);
+  renderSummary(newProfile);
+  setSaveMsg('New profile created. Fill in details and save.');
+  showToast(`Profile "${name}" created.`);
+});
+
+/* ── Delete profile ── */
+document.getElementById('deleteProfileBtn').addEventListener('click',()=>{
+  const list = loadProfileList();
+  const sel = document.getElementById('profileSelect');
+  const id = sel.value;
+  const name = list.find(p=>p.id===id)?.name || 'this profile';
+  if(list.length<=1){ alert('You must have at least one profile.'); return; }
+  if(!confirm(`Delete profile "${name}"? This only removes the profile settings, not your hotel data.`)) return;
+  const newList = list.filter(p=>p.id!==id);
+  saveProfileList(newList);
+  deleteProfileData(id);
+  const newActive = newList[0].id;
+  setActiveProfileId(newActive);
+  renderProfileSelect(newActive);
+  const data = loadProfileData(newActive);
+  writeForm(data||{}); renderSummary(data);
+  setSaveMsg('Profile deleted. Showing next profile.');
+  showToast(`Profile "${name}" deleted.`);
+});
+
+/* ── Save ── */
+document.getElementById('saveBtn').addEventListener('click',()=>{
+  const list = loadProfileList();
+  const sel = document.getElementById('profileSelect');
+  const id = sel.value || getActiveProfileId();
+  if(!id){ showToast('No active profile to save.'); return; }
+
+  const data = readForm();
+  data.id = id;
+  data.name = data.propName || list.find(p=>p.id===id)?.name || 'My Property';
+  data.updatedAt = new Date().toISOString();
+
+  // Preserve createdAt
+  const existing = loadProfileData(id);
+  if(existing?.createdAt) data.createdAt = existing.createdAt;
+
+  saveProfileData(id, data);
+  applyProfileToDashboard(data);
+
+  // Update display name in list
+  const newList = list.map(p=>p.id===id ? {...p, name: data.name} : p);
+  saveProfileList(newList);
+  renderProfileSelect(id);
+  renderSummary(data);
+  renderStorageTable();
+
+  setSaveMsg('✓ Profile saved and applied to dashboard.', 'ok');
+  showToast('Profile saved.');
+});
+
+/* ── Discard ── */
+document.getElementById('resetBtn').addEventListener('click',()=>{
+  const id = getActiveProfileId();
+  const data = id ? loadProfileData(id) : null;
+  if(data) writeForm(data);
+  setSaveMsg('Changes discarded.');
+  showToast('Changes discarded.');
+});
+
+/* ── Boot ── */
+init();
+</script>
+</body>
+</html>
