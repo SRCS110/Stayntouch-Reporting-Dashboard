@@ -248,12 +248,12 @@ body::before{
 ════════════════════════════════════════════════════ */
 
 // If already logged in, skip straight to the dashboard
-(async () => {
-  try {
-    const session = await Auth.getSession();
-    if (session) { location.href = 'index.html'; return; }
-  } catch(e) {}
-})();
+//(async () => {
+  //try {
+    //const session = await Auth.getSession();
+    //if (session) { location.href = 'index.html'; return; }
+ // } catch(e) {}
+//})();
 
 // Check for password reset mode (redirected from reset email)
 const urlParams = new URLSearchParams(location.search);
