@@ -38,394 +38,302 @@
 <script src="https://accounts.google.com/gsi/client" async defer onload="if(typeof onGisLoad==='function')onGisLoad()"></script>
 <script src="https://apis.google.com/js/api.js" async defer onload="if(typeof onGapiLoad==='function')onGapiLoad()"></script>
 <style>
+/* ══════════════════════════════════════════
+   DESIGN SYSTEM — StayNTouch-inspired
+   Clean white, bold cards, color-coded tiles
+══════════════════════════════════════════ */
 :root{
-  --ink:#1B2430;--ink-soft:#4A5568;--paper:#F7F4EE;--card:#FFFFFF;
-  --line:#E4DFD3;--brass:#A9793C;--brass-soft:#D9C39A;
-  --good:#2F6B4F;--bad:#B4483C;--radius:10px;
+  --ink:#1A2332;--ink-soft:#6B7A8D;--ink-xsoft:#A8B5C2;
+  --paper:#F2F4F7;--card:#FFFFFF;--line:#E3E8EF;
+  --green:#27AE60;--green-soft:#E8F8EF;--green-dark:#1E8449;
+  --blue:#2E86C1;--blue-soft:#E8F4FD;
+  --orange:#E67E22;--orange-soft:#FEF0E3;
+  --red:#E74C3C;--red-soft:#FDEDEC;
+  --purple:#8E44AD;--purple-soft:#F5EEF8;
+  --good:#27AE60;--bad:#E74C3C;--warn:#E67E22;
+  --accent:#2E86C1;--accent-soft:#E8F4FD;
+  --radius:8px;--radius-lg:12px;
+  --shadow:0 1px 3px rgba(0,0,0,0.08),0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md:0 4px 12px rgba(0,0,0,0.08),0 2px 4px rgba(0,0,0,0.04);
 }
 *{box-sizing:border-box;}
-body{margin:0;background:var(--paper);color:var(--ink);font-family:'Inter',system-ui,sans-serif;-webkit-font-smoothing:antialiased;}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:'Inter',system-ui,sans-serif;-webkit-font-smoothing:antialiased;font-size:14px;}
 
 /* ── Top chrome ── */
 .app-header{
-  background:var(--card);border-bottom:1px solid var(--line);
-  padding:0 32px;display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;
+  background:var(--ink);
+  padding:0 28px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;
+  box-shadow:0 2px 8px rgba(0,0,0,0.15);
 }
-.app-header .brand{display:flex;align-items:baseline;gap:14px;padding:18px 0;}
-.app-header h1{font-family:'Fraunces',serif;font-weight:600;font-size:1.45rem;margin:0;letter-spacing:-0.01em;}
+.app-header .brand{display:flex;align-items:center;gap:10px;padding:14px 0;}
+.app-header h1{font-family:'Inter',sans-serif;font-weight:700;font-size:1.1rem;margin:0;color:#fff;letter-spacing:-0.01em;}
+.app-header .brand-sub{font-size:0.72rem;color:rgba(255,255,255,0.45);font-weight:500;margin-top:1px;}
 .key-badge{
-  display:flex;align-items:center;gap:8px;font-family:'IBM Plex Mono',monospace;font-size:0.72rem;
-  color:var(--brass);border:1px solid var(--brass-soft);padding:6px 12px;border-radius:999px;background:#FFFBF3;
+  display:flex;align-items:center;gap:7px;font-size:0.72rem;font-weight:500;
+  color:rgba(255,255,255,0.55);border:1px solid rgba(255,255,255,0.15);
+  padding:5px 11px;border-radius:999px;background:rgba(255,255,255,0.06);
 }
-.key-badge .dot{width:6px;height:6px;border-radius:50%;background:var(--brass);}
+.key-badge .dot{width:5px;height:5px;border-radius:50%;background:#27AE60;}
 
 /* ── Tab nav ── */
 .tab-nav{
-  display:flex;gap:0;border-bottom:2px solid var(--line);
-  background:var(--card);padding:0 32px;overflow-x:auto;
+  display:flex;gap:0;border-bottom:1px solid var(--line);
+  background:var(--card);padding:0 28px;overflow-x:auto;
+  box-shadow:var(--shadow);
 }
 .tab-btn{
-  font-family:'Inter',sans-serif;font-size:0.88rem;font-weight:600;
-  background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;
-  padding:14px 20px;cursor:pointer;color:var(--ink-soft);transition:color .15s,border-color .15s;white-space:nowrap;
+  font-family:'Inter',sans-serif;font-size:0.82rem;font-weight:600;
+  background:none;border:none;border-bottom:3px solid transparent;margin-bottom:-1px;
+  padding:13px 18px;cursor:pointer;color:var(--ink-soft);transition:color .15s,border-color .15s;white-space:nowrap;
 }
 .tab-btn:hover{color:var(--ink);}
-.tab-btn.active{color:var(--brass);border-bottom-color:var(--brass);}
+.tab-btn.active{color:var(--accent);border-bottom-color:var(--accent);}
 
 /* ── Layout ── */
-.tab-panel{display:none;max-width:1180px;margin:0 auto;padding:36px 28px 80px;}
+.tab-panel{display:none;max-width:1280px;margin:0 auto;padding:28px 24px 80px;}
 .tab-panel.active{display:block;}
-section{margin-bottom:36px;}
-.section-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px;flex-wrap:wrap;gap:10px;}
-.section-head h2{font-family:'Fraunces',serif;font-weight:600;font-size:1.2rem;margin:0;}
-.section-head .sub{color:var(--ink-soft);font-size:0.85rem;}
+section{margin-bottom:28px;}
+.section-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px;}
+.section-head h2{font-size:0.85rem;font-weight:700;margin:0;color:var(--ink);text-transform:uppercase;letter-spacing:0.04em;}
+.section-head .sub{color:var(--ink-soft);font-size:0.78rem;}
 
-/* ── Cards ── */
-.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:32px;}
+/* ── Stat tile cards (StayNTouch style) ── */
+.stat-tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;}
+@media(max-width:900px){.stat-tiles{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:500px){.stat-tiles{grid-template-columns:1fr;}}
+.stat-tile{
+  border-radius:var(--radius-lg);padding:20px 22px 18px;color:#fff;
+  position:relative;overflow:hidden;box-shadow:var(--shadow-md);
+}
+.stat-tile.green{background:linear-gradient(135deg,#27AE60,#1E8449);}
+.stat-tile.blue{background:linear-gradient(135deg,#2E86C1,#1A5276);}
+.stat-tile.orange{background:linear-gradient(135deg,#E67E22,#CA6F1E);}
+.stat-tile.red{background:linear-gradient(135deg,#E74C3C,#C0392B);}
+.stat-tile.purple{background:linear-gradient(135deg,#8E44AD,#6C3483);}
+.stat-tile.teal{background:linear-gradient(135deg,#17A589,#148A77);}
+.stat-tile.slate{background:linear-gradient(135deg,#566573,#2E4053);}
+.stat-tile.navy{background:linear-gradient(135deg,#1A2332,#0D1B2A);}
+.stat-tile .tile-label{font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;opacity:0.8;margin-bottom:10px;}
+.stat-tile .tile-value{font-size:2rem;font-weight:700;line-height:1;margin-bottom:8px;letter-spacing:-0.02em;}
+.stat-tile .tile-delta{font-size:0.72rem;opacity:0.85;font-weight:500;}
+.stat-tile .tile-delta.pos{color:#A9DFBF;}
+.stat-tile .tile-delta.neg{color:#F1948A;}
+.stat-tile .tile-delta.flat{opacity:0.6;}
+.stat-tile::after{content:'';position:absolute;right:-20px;bottom:-20px;width:90px;height:90px;border-radius:50%;background:rgba(255,255,255,0.06);}
+
+/* ── White info cards ── */
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;}
 @media(max-width:820px){.cards{grid-template-columns:repeat(2,1fr);}}
-.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px 18px 16px;}
-.card .label{font-size:0.7rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:8px;}
-.card .value{font-family:'Fraunces',serif;font-size:1.65rem;font-weight:500;}
-.card .delta{font-family:'IBM Plex Mono',monospace;font-size:0.78rem;margin-top:6px;display:inline-flex;align-items:center;gap:4px;}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius-lg);padding:18px 20px 16px;box-shadow:var(--shadow);}
+.card .label{font-size:0.68rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:8px;}
+.card .value{font-size:1.55rem;font-weight:700;color:var(--ink);letter-spacing:-0.02em;}
+.card .delta{font-size:0.72rem;margin-top:6px;display:inline-flex;align-items:center;gap:4px;font-weight:500;}
 .delta.pos{color:var(--good);} .delta.neg{color:var(--bad);} .delta.flat{color:var(--ink-soft);}
 
 /* ── Panel / form ── */
-.panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:22px;}
-.form-grid{display:grid;grid-template-columns:repeat(5,1fr) auto;gap:14px;align-items:end;}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius-lg);padding:20px;box-shadow:var(--shadow);}
+.form-grid{display:grid;grid-template-columns:repeat(5,1fr) auto;gap:12px;align-items:end;}
 @media(max-width:900px){.form-grid{grid-template-columns:repeat(2,1fr);}}
-.field label{display:block;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--ink-soft);margin-bottom:6px;}
+.field label{display:block;font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--ink-soft);margin-bottom:5px;}
 .field input,.field select{
-  width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:6px;
-  font-family:'Inter',sans-serif;font-size:0.9rem;background:#FCFBF8;color:var(--ink);
+  width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:6px;
+  font-family:'Inter',sans-serif;font-size:0.88rem;background:#FAFBFC;color:var(--ink);transition:border-color .15s;
 }
-.field input:focus,.field select:focus{outline:none;border-color:var(--brass);}
+.field input:focus,.field select:focus{outline:none;border-color:var(--accent);background:#fff;}
 button{
-  font-family:'Inter',sans-serif;font-weight:600;font-size:0.85rem;border-radius:6px;
-  border:none;padding:10px 18px;cursor:pointer;transition:opacity .15s;
+  font-family:'Inter',sans-serif;font-weight:600;font-size:0.82rem;border-radius:6px;
+  border:none;padding:9px 16px;cursor:pointer;transition:opacity .15s,box-shadow .15s;
 }
-button:hover{opacity:0.82;}
-.btn-primary{background:var(--ink);color:#fff;}
-.btn-ghost{background:transparent;color:var(--ink-soft);border:1px solid var(--line);}
-.form-msg{font-size:0.8rem;margin-top:10px;color:var(--ink-soft);min-height:1.1em;}
+button:hover{opacity:0.88;}
+.btn-primary{background:var(--accent);color:#fff;box-shadow:0 2px 4px rgba(46,134,193,0.3);}
+.btn-ghost{background:transparent;color:var(--ink-soft);border:1.5px solid var(--line);}
+.btn-ghost:hover{border-color:var(--ink-soft);color:var(--ink);}
+.form-msg{font-size:0.78rem;margin-top:8px;color:var(--ink-soft);min-height:1.1em;}
 
 /* ── Tables ── */
-table{width:100%;border-collapse:collapse;font-size:0.87rem;}
+table{width:100%;border-collapse:collapse;font-size:0.83rem;}
 thead th{
-  text-align:right;font-size:0.68rem;text-transform:uppercase;letter-spacing:0.05em;
-  color:var(--ink-soft);padding:8px 10px;border-bottom:1px solid var(--line);
+  text-align:right;font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;
+  color:var(--ink-soft);padding:10px 12px;border-bottom:2px solid var(--line);background:#FAFBFC;
 }
 thead th:first-child,thead th:nth-child(2){text-align:left;}
-tbody td{padding:9px 10px;text-align:right;border-bottom:1px solid #EFEBE1;font-family:'IBM Plex Mono',monospace;font-size:0.83rem;}
-tbody td:first-child,tbody td:nth-child(2){text-align:left;font-family:'Inter',sans-serif;}
-tbody tr:hover{background:#FBF9F4;}
-.row-actions button{padding:4px 9px;font-size:0.72rem;margin-left:4px;}
-.empty-state{padding:30px;text-align:center;color:var(--ink-soft);font-size:0.9rem;}
+tbody td{padding:10px 12px;text-align:right;border-bottom:1px solid var(--line);color:var(--ink);}
+tbody td:first-child,tbody td:nth-child(2){text-align:left;}
+tbody tr:hover{background:#F8FAFC;}
+.row-actions button{padding:4px 9px;font-size:0.7rem;margin-left:3px;}
+.empty-state{padding:40px;text-align:center;color:var(--ink-soft);font-size:0.88rem;}
+.num{font-family:'IBM Plex Mono',monospace;font-size:0.82rem;}
 
 /* ── Charts ── */
-.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
 @media(max-width:900px){.chart-grid{grid-template-columns:1fr;}}
-.chart-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px 18px 8px;}
-.chart-card h3{font-family:'Fraunces',serif;font-size:1rem;font-weight:600;margin:0 0 2px;}
-.chart-card .fx{font-family:'IBM Plex Mono',monospace;font-size:0.7rem;color:var(--ink-soft);margin-bottom:10px;}
+.chart-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius-lg);padding:18px 18px 10px;box-shadow:var(--shadow);}
+.chart-card h3{font-size:0.82rem;font-weight:700;margin:0 0 2px;color:var(--ink);text-transform:uppercase;letter-spacing:0.03em;}
+.chart-card .fx{font-size:0.72rem;color:var(--ink-soft);margin-bottom:12px;}
 canvas{max-height:240px;}
 
 /* ── Calendar ── */
-.cal-controls{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:14px;}
-.cal-nav{display:flex;align-items:center;gap:10px;}
-.cal-nav button{padding:6px 12px;}
-.cal-title{font-family:'Fraunces',serif;font-weight:600;font-size:1.15rem;min-width:160px;text-align:center;}
-.cal-monthly-summary{
-  display:grid;grid-template-columns:repeat(4,1fr);gap:14px;
-  margin-bottom:18px;
-}
+.cal-controls{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:12px;}
+.cal-nav{display:flex;align-items:center;gap:8px;}
+.cal-nav button{padding:6px 14px;}
+.cal-title{font-size:1rem;font-weight:700;min-width:160px;text-align:center;color:var(--ink);}
+.cal-monthly-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;}
 @media(max-width:700px){.cal-monthly-summary{grid-template-columns:repeat(2,1fr);}}
-.cal-ms-card{background:#FFFBF3;border:1px solid var(--brass-soft);border-radius:8px;padding:12px 14px;}
-.cal-ms-card .label{font-size:0.65rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-soft);margin-bottom:4px;}
-.cal-ms-card .cur{font-family:'Fraunces',serif;font-size:1.3rem;font-weight:500;}
-.cal-ms-card .ly{font-family:'IBM Plex Mono',monospace;font-size:0.72rem;color:var(--ink-soft);margin:2px 0;}
-.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;}
-.cal-weekday{font-size:0.66rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--ink-soft);text-align:center;padding-bottom:4px;}
-.cal-cell{
-  min-height:68px;border:1px solid var(--line);border-radius:6px;
-  padding:6px 8px;background:#FCFBF8;cursor:pointer;transition:background .12s,border-color .12s;position:relative;
-}
-.cal-cell:hover{background:#F1ECDF;}
+.cal-ms-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;box-shadow:var(--shadow);}
+.cal-ms-card .label{font-size:0.63rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-soft);margin-bottom:4px;}
+.cal-ms-card .cur{font-size:1.25rem;font-weight:700;color:var(--ink);}
+.cal-ms-card .ly{font-size:0.7rem;color:var(--ink-soft);margin:2px 0;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
+.cal-weekday{font-size:0.63rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--ink-soft);text-align:center;padding-bottom:6px;}
+.cal-cell{min-height:64px;border:1.5px solid var(--line);border-radius:6px;padding:5px 7px;background:var(--card);cursor:pointer;transition:all .12s;position:relative;}
+.cal-cell:hover{background:var(--accent-soft);border-color:var(--accent);}
 .cal-cell.empty{background:transparent;border-color:transparent;cursor:default;}
-.cal-cell.selected{border-color:var(--brass);box-shadow:0 0 0 1px var(--brass);}
+.cal-cell.selected{border-color:var(--accent);box-shadow:0 0 0 2px rgba(46,134,193,0.2);}
+.cal-cell .daynum{font-size:0.7rem;font-weight:600;color:var(--ink-xsoft);}
 .cal-cell.has-data .daynum{color:var(--ink);}
-.cal-cell .daynum{font-family:'IBM Plex Mono',monospace;font-size:0.75rem;color:#B0A899;}
-.cal-cell .day-rev{font-family:'IBM Plex Mono',monospace;font-size:0.72rem;color:var(--brass);margin-top:6px;font-weight:600;}
-.cal-cell .day-occ{font-size:0.68rem;color:var(--ink-soft);margin-top:2px;}
-.cal-day-detail{margin-top:20px;border-top:1px solid var(--line);padding-top:16px;}
-.detail-row{
-  display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:10px;
-  padding:8px 4px;border-bottom:1px solid #EFEBE1;font-size:0.85rem;align-items:center;
-}
-.detail-row.hdr{font-size:0.66rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--ink-soft);border-bottom:1px solid var(--line);}
-.detail-row .num{font-family:'IBM Plex Mono',monospace;text-align:right;}
+.cal-cell .day-rev{font-size:0.68rem;color:var(--accent);margin-top:5px;font-weight:700;}
+.cal-cell .day-occ{font-size:0.65rem;color:var(--ink-soft);margin-top:1px;}
+.cal-day-detail{margin-top:16px;border-top:1px solid var(--line);padding-top:14px;}
+.detail-row{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:10px;padding:7px 4px;border-bottom:1px solid var(--line);font-size:0.83rem;align-items:center;}
+.detail-row.hdr{font-size:0.63rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--ink-soft);border-bottom:1.5px solid var(--line);}
+.detail-row .num{text-align:right;}
 
 /* ── Rate audit ── */
-.audit-controls{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px;}
+.audit-controls{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:14px;}
 .audit-controls .field{min-width:140px;}
-.audit-badge{
-  display:inline-flex;align-items:center;gap:6px;font-family:'IBM Plex Mono',monospace;
-  font-size:0.72rem;padding:4px 10px;border-radius:4px;
-}
-.audit-badge.above{background:#EBF5EF;color:var(--good);}
-.audit-badge.below{background:#FBF0EE;color:var(--bad);}
-.audit-badge.flat{background:#F3F0EA;color:var(--ink-soft);}
-.audit-pct{font-family:'IBM Plex Mono',monospace;font-size:0.8rem;}
+.audit-badge{display:inline-flex;align-items:center;gap:5px;font-size:0.7rem;font-weight:600;padding:3px 9px;border-radius:4px;}
+.audit-badge.above{background:var(--green-soft);color:var(--good);}
+.audit-badge.below{background:var(--red-soft);color:var(--bad);}
+.audit-badge.flat{background:var(--paper);color:var(--ink-soft);}
+.audit-pct{font-size:0.78rem;font-weight:600;}
 .audit-pct.pos{color:var(--good);} .audit-pct.neg{color:var(--bad);} .audit-pct.flat{color:var(--ink-soft);}
-
-/* ── CSV multi preview ── */
-.cm-mode-select{width:100%;padding:5px 8px;border:1px solid var(--line);border-radius:5px;font-size:0.83rem;background:#FCFBF8;}
+.cm-mode-select{width:100%;padding:5px 8px;border:1.5px solid var(--line);border-radius:5px;font-size:0.82rem;background:#FAFBFC;}
 
 /* ── Financials ── */
-.fin-var.pos{color:var(--good);font-family:'IBM Plex Mono',monospace;font-size:0.8rem;}
-.fin-var.neg{color:var(--bad);font-family:'IBM Plex Mono',monospace;font-size:0.8rem;}
-.fin-var.flat{color:var(--ink-soft);font-family:'IBM Plex Mono',monospace;font-size:0.8rem;}
-.fin-total-row td{font-weight:600;background:#F7F4EE;border-top:2px solid var(--line);}
-.fin-progress{height:6px;border-radius:3px;background:#E4DFD3;margin-top:5px;overflow:hidden;}
-.fin-progress-bar{height:100%;border-radius:3px;background:var(--brass);transition:width .3s;}
+.fin-var{font-size:0.78rem;font-weight:600;}
+.fin-var.pos{color:var(--good);}
+.fin-var.neg{color:var(--bad);}
+.fin-var.flat{color:var(--ink-soft);}
+.fin-total-row td{font-weight:700;background:#F2F4F7;border-top:2px solid var(--line);}
+.fin-progress{height:5px;border-radius:3px;background:var(--line);margin-top:6px;overflow:hidden;}
+.fin-progress-bar{height:100%;border-radius:3px;background:var(--accent);transition:width .3s;}
 .fin-progress-bar.over{background:var(--bad);}
-.fin-budget-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px;}
-@media(max-width:820px){.fin-budget-cards{grid-template-columns:repeat(2,1fr);}}
-.fin-bcard{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px 14px;}
-.fin-bcard .label{font-size:0.68rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:6px;}
-.fin-bcard .actual{font-family:'Fraunces',serif;font-size:1.5rem;font-weight:500;}
-.fin-bcard .budget-line{font-family:'IBM Plex Mono',monospace;font-size:0.75rem;color:var(--ink-soft);margin:3px 0;}
-.fin-section-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
-.fin-section-tab{font-size:0.8rem;font-weight:600;padding:6px 14px;border-radius:999px;cursor:pointer;border:1px solid var(--line);background:transparent;color:var(--ink-soft);}
-.fin-section-tab.active{background:var(--ink);color:#fff;border-color:var(--ink);}
+.fin-budget-cards{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:24px;}
+@media(max-width:900px){.fin-budget-cards{grid-template-columns:repeat(3,1fr);}}
+@media(max-width:600px){.fin-budget-cards{grid-template-columns:repeat(2,1fr);}}
+.fin-bcard{background:var(--card);border:1px solid var(--line);border-radius:var(--radius-lg);padding:16px 18px 14px;box-shadow:var(--shadow);}
+.fin-bcard .label{font-size:0.65rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:6px;}
+.fin-bcard .actual{font-size:1.4rem;font-weight:700;color:var(--ink);letter-spacing:-0.02em;}
+.fin-bcard .budget-line{font-size:0.72rem;color:var(--ink-soft);margin:3px 0;font-weight:500;}
+.fin-section-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;}
+.fin-section-tab{font-size:0.78rem;font-weight:600;padding:7px 16px;border-radius:999px;cursor:pointer;border:1.5px solid var(--line);background:transparent;color:var(--ink-soft);transition:all .15s;}
+.fin-section-tab.active{background:var(--accent);color:#fff;border-color:var(--accent);}
 
-/* ── Auth loading screen (shown while session is checked) ── */
-#authLoading{
-  position:fixed;inset:0;z-index:9999;background:var(--ink);
-  display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;
-}
-#authLoading .al-logo{
-  width:52px;height:52px;background:var(--card);border-radius:12px;
-  display:flex;align-items:center;justify-content:center;margin-bottom:4px;
-}
-#authLoading .al-spinner{
-  width:22px;height:22px;border:2px solid rgba(255,255,255,0.15);
-  border-top-color:var(--brass);border-radius:50%;animation:spin .7s linear infinite;
-}
-#authLoading .al-text{font-size:0.8rem;color:rgba(255,255,255,0.4);font-family:'IBM Plex Mono',monospace;}
+/* ── Analytics cards ── */
+.analytics-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px;}
+@media(max-width:820px){.analytics-grid{grid-template-columns:1fr 1fr;}}
+.analytics-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius-lg);padding:18px 20px;box-shadow:var(--shadow);}
+.analytics-card .ac-label{font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-soft);margin-bottom:10px;}
+.analytics-card .ac-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--line);font-size:0.82rem;}
+.analytics-card .ac-row:last-child{border-bottom:none;}
+.analytics-card .ac-row .ac-key{color:var(--ink-soft);font-weight:500;}
+.analytics-card .ac-row .ac-val{font-weight:700;color:var(--ink);}
+.ac-var{font-size:0.7rem;font-weight:600;padding:2px 7px;border-radius:4px;}
+.ac-var.pos{background:var(--green-soft);color:var(--good);}
+.ac-var.neg{background:var(--red-soft);color:var(--bad);}
+.ac-var.flat{background:var(--paper);color:var(--ink-soft);}
+
+/* ── Forecast cards ── */
+.forecast-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px;}
+@media(max-width:820px){.forecast-grid{grid-template-columns:repeat(2,1fr);}}
+.forecast-card{background:var(--card);border:2px solid var(--line);border-radius:var(--radius-lg);padding:16px 18px;box-shadow:var(--shadow);}
+.forecast-card.on-pace{border-color:var(--green);}
+.forecast-card.below-pace{border-color:var(--red);}
+.forecast-card .fc-month{font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-soft);margin-bottom:6px;}
+.forecast-card .fc-projected{font-size:1.3rem;font-weight:700;color:var(--ink);letter-spacing:-0.02em;}
+.forecast-card .fc-label{font-size:0.65rem;color:var(--ink-soft);margin-bottom:8px;}
+.forecast-card .fc-bar-wrap{background:var(--line);border-radius:3px;height:5px;overflow:hidden;margin:8px 0;}
+.forecast-card .fc-bar{height:100%;border-radius:3px;background:var(--accent);}
+.forecast-card .fc-bar.over{background:var(--green);}
+.forecast-card .fc-bar.under{background:var(--red);}
+.forecast-card .fc-pct{font-size:0.72rem;font-weight:700;}
+.forecast-card .fc-pct.over{color:var(--good);}
+.forecast-card .fc-pct.under{color:var(--bad);}
+
+/* ── STLY pace comparison ── */
+.pace-stly{background:var(--card);border:1px solid var(--line);border-radius:var(--radius-lg);padding:18px 20px;box-shadow:var(--shadow);margin-bottom:20px;}
+.pace-stly h3{font-size:0.82rem;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:var(--ink);margin:0 0 3px;}
+.pace-stly .stly-sub{font-size:0.73rem;color:var(--ink-soft);margin:0 0 14px;}
+.stly-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+@media(max-width:700px){.stly-grid{grid-template-columns:1fr 1fr;}}
+.stly-cell{background:#FAFBFC;border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;}
+.stly-cell .sc-label{font-size:0.63rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--ink-soft);margin-bottom:4px;}
+.stly-cell .sc-cur{font-size:1.05rem;font-weight:700;color:var(--ink);}
+.stly-cell .sc-ly{font-size:0.7rem;color:var(--ink-soft);margin-top:2px;}
+.stly-cell .sc-var{font-size:0.68rem;font-weight:600;margin-top:3px;}
+.sc-var.pos{color:var(--good);}
+.sc-var.neg{color:var(--bad);}
+.sc-var.flat{color:var(--ink-soft);}
+
+/* ── Auth loading ── */
+#authLoading{position:fixed;inset:0;z-index:9999;background:var(--ink);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;}
+#authLoading .al-logo{width:52px;height:52px;background:rgba(255,255,255,0.1);border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:4px;}
+#authLoading .al-spinner{width:22px;height:22px;border:2px solid rgba(255,255,255,0.15);border-top-color:#27AE60;border-radius:50%;animation:spin .7s linear infinite;}
+#authLoading .al-text{font-size:0.78rem;color:rgba(255,255,255,0.4);font-weight:500;}
 @keyframes spin{to{transform:rotate(360deg);}}
 
-/* ── User pill (top-right header) ── */
-.user-pill{
-  display:inline-flex;align-items:center;gap:8px;
-  border:1px solid var(--line);border-radius:999px;
-  padding:5px 12px 5px 6px;background:var(--card);cursor:pointer;
-  transition:background .12s,border-color .12s;position:relative;
-  font-size:0.82rem;color:var(--ink);font-weight:500;
-  white-space:nowrap;
-}
-.user-pill:hover{background:#F1ECDF;border-color:var(--brass-soft);}
-.user-pill .up-avatar{
-  width:26px;height:26px;border-radius:50%;background:var(--brass-soft);
-  display:flex;align-items:center;justify-content:center;
-  font-size:0.7rem;font-weight:700;color:var(--brass);overflow:hidden;flex-shrink:0;
-}
+/* ── User pill ── */
+.user-pill{display:inline-flex;align-items:center;gap:8px;border:1px solid rgba(255,255,255,0.2);border-radius:999px;padding:5px 12px 5px 6px;background:rgba(255,255,255,0.08);cursor:pointer;transition:background .12s;position:relative;font-size:0.8rem;color:rgba(255,255,255,0.85);font-weight:500;white-space:nowrap;}
+.user-pill:hover{background:rgba(255,255,255,0.15);}
+.user-pill .up-avatar{width:26px;height:26px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:0.68rem;font-weight:700;color:#fff;overflow:hidden;flex-shrink:0;}
 .user-pill .up-avatar img{width:100%;height:100%;object-fit:cover;}
-/* Dropdown menu */
-.user-menu{
-  position:absolute;top:calc(100% + 8px);right:0;
-  background:var(--card);border:1px solid var(--line);border-radius:10px;
-  box-shadow:0 8px 28px rgba(0,0,0,0.12);min-width:200px;
-  padding:6px;z-index:200;display:none;
-}
+.user-menu{position:absolute;top:calc(100% + 8px);right:0;background:var(--card);border:1px solid var(--line);border-radius:var(--radius-lg);box-shadow:var(--shadow-md);min-width:200px;padding:6px;z-index:200;display:none;}
 .user-menu.open{display:block;}
 .user-menu-header{padding:10px 12px 8px;border-bottom:1px solid var(--line);margin-bottom:4px;}
-.user-menu-header .um-name{font-weight:600;font-size:0.88rem;}
-.user-menu-header .um-email{font-size:0.76rem;color:var(--ink-soft);margin-top:2px;word-break:break-all;}
-.user-menu-item{
-  display:flex;align-items:center;gap:9px;width:100%;padding:9px 12px;
-  background:none;border:none;border-radius:6px;font-size:0.84rem;
-  font-family:'Inter',sans-serif;color:var(--ink);cursor:pointer;text-align:left;
-  transition:background .1s;
-}
-.user-menu-item:hover{background:#F7F4EE;}
+.user-menu-header .um-name{font-weight:700;font-size:0.85rem;color:var(--ink);}
+.user-menu-header .um-email{font-size:0.72rem;color:var(--ink-soft);margin-top:2px;word-break:break-all;}
+.user-menu-item{display:flex;align-items:center;gap:9px;width:100%;padding:8px 12px;background:none;border:none;border-radius:6px;font-size:0.82rem;font-family:'Inter',sans-serif;color:var(--ink);cursor:pointer;text-align:left;transition:background .1s;}
+.user-menu-item:hover{background:var(--paper);}
 .user-menu-item.danger{color:var(--bad);}
-.user-menu-item.danger:hover{background:#FBF0EE;}
+.user-menu-item.danger:hover{background:var(--red-soft);}
+.drive-header-btn{display:inline-flex;align-items:center;gap:7px;font-family:'Inter',sans-serif;font-size:0.75rem;font-weight:600;padding:7px 13px;border-radius:6px;background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.7);border:1px solid rgba(255,255,255,0.15);cursor:pointer;transition:background .12s;}
+.drive-header-btn:hover{background:rgba(255,255,255,0.15);opacity:1;}
+.drive-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.3);}
+.drive-dot.connected{background:#27AE60;}
+.profile-pill{display:inline-flex;align-items:center;gap:7px;font-size:0.72rem;font-weight:600;color:rgba(255,255,255,0.55);border:1px solid rgba(255,255,255,0.15);padding:5px 11px;border-radius:999px;background:rgba(255,255,255,0.06);cursor:pointer;text-decoration:none;transition:background .12s;white-space:nowrap;}
+.profile-pill:hover{background:rgba(255,255,255,0.12);color:rgba(255,255,255,0.85);}
+.profile-pill .pp-dot{width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,0.3);}
+.profile-pill.has-profile .pp-dot{background:#27AE60;}
+.profile-setup-banner{background:#FEF0E3;border-bottom:1px solid #F0C080;padding:9px 28px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+.profile-setup-banner span{font-size:0.8rem;color:#7D5A00;}
+.profile-setup-banner a{font-size:0.78rem;font-weight:600;color:var(--orange);text-decoration:none;border:1px solid #F0C080;padding:4px 12px;border-radius:6px;background:#fff;}
 
-/* ── Property profile drawer ── */
-#profileDrawerOverlay{
-  position:fixed;inset:0;z-index:400;background:rgba(27,36,48,0.45);
-  opacity:0;pointer-events:none;transition:opacity .25s ease;
-}
+/* ── Profile drawer ── */
+#profileDrawerOverlay{position:fixed;inset:0;z-index:400;background:rgba(26,35,50,0.5);opacity:0;pointer-events:none;transition:opacity .25s ease;}
 #profileDrawerOverlay.open{opacity:1;pointer-events:auto;}
-#profileDrawer{
-  position:fixed;top:0;right:0;bottom:0;z-index:401;
-  width:min(480px,100vw);background:var(--paper);
-  box-shadow:-8px 0 40px rgba(0,0,0,0.18);
-  display:flex;flex-direction:column;
-  transform:translateX(100%);transition:transform .28s cubic-bezier(.4,0,.2,1);
-  overflow:hidden;
-}
+#profileDrawer{position:fixed;top:0;right:0;bottom:0;z-index:401;width:min(480px,100vw);background:var(--paper);box-shadow:-8px 0 40px rgba(0,0,0,0.15);display:flex;flex-direction:column;transform:translateX(100%);transition:transform .28s cubic-bezier(.4,0,.2,1);overflow:hidden;}
 #profileDrawer.open{transform:translateX(0);}
-.drawer-header{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:18px 24px;background:var(--card);border-bottom:1px solid var(--line);
-  flex-shrink:0;
-}
-.drawer-header h2{
-  font-family:'Fraunces',serif;font-weight:600;font-size:1.1rem;margin:0;
-}
-.drawer-close{
-  background:none;border:none;cursor:pointer;padding:6px;border-radius:6px;
-  color:var(--ink-soft);display:flex;align-items:center;justify-content:center;
-  transition:background .12s;
-}
-.drawer-close:hover{background:var(--line);}
-.drawer-body{flex:1;overflow-y:auto;padding:24px;}
-.drawer-section{
-  background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
-  padding:20px 22px;margin-bottom:18px;
-}
-.drawer-section h3{
-  font-family:'Fraunces',serif;font-weight:600;font-size:0.95rem;margin:0 0 3px;
-}
-.drawer-section .ds-sub{
-  color:var(--ink-soft);font-size:0.78rem;margin:0 0 16px;display:block;
-}
-.drawer-field-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.drawer-header{display:flex;align-items:center;justify-content:space-between;padding:16px 22px;background:var(--ink);border-bottom:1px solid rgba(255,255,255,0.1);flex-shrink:0;}
+.drawer-header h2{font-size:0.88rem;font-weight:700;margin:0;color:#fff;text-transform:uppercase;letter-spacing:0.04em;}
+.drawer-close{background:rgba(255,255,255,0.1);border:none;cursor:pointer;padding:6px;border-radius:6px;color:rgba(255,255,255,0.7);display:flex;align-items:center;justify-content:center;transition:background .12s;}
+.drawer-close:hover{background:rgba(255,255,255,0.2);}
+.drawer-body{flex:1;overflow-y:auto;padding:20px;}
+.drawer-section{background:var(--card);border:1px solid var(--line);border-radius:var(--radius-lg);padding:16px 18px;margin-bottom:14px;box-shadow:var(--shadow);}
+.drawer-section h3{font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--ink);margin:0 0 3px;}
+.drawer-section .ds-sub{color:var(--ink-soft);font-size:0.73rem;margin:0 0 12px;display:block;}
+.drawer-field-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
 @media(max-width:520px){.drawer-field-grid{grid-template-columns:1fr;}}
 .drawer-field-grid.single{grid-template-columns:1fr;}
-.drawer-field{display:flex;flex-direction:column;gap:5px;}
-.drawer-field label{
-  font-size:0.68rem;text-transform:uppercase;letter-spacing:0.05em;
-  color:var(--ink-soft);font-weight:600;
-}
-.drawer-field input,.drawer-field select,.drawer-field textarea{
-  padding:9px 11px;border:1px solid var(--line);border-radius:6px;
-  font-family:'Inter',sans-serif;font-size:0.88rem;background:#FCFBF8;color:var(--ink);
-  transition:border-color .15s;
-}
-.drawer-field input:focus,.drawer-field select:focus,.drawer-field textarea:focus{
-  outline:none;border-color:var(--brass);
-}
+.drawer-field{display:flex;flex-direction:column;gap:4px;}
+.drawer-field label{font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--ink-soft);}
+.drawer-field input,.drawer-field select,.drawer-field textarea{padding:8px 10px;border:1.5px solid var(--line);border-radius:6px;font-family:'Inter',sans-serif;font-size:0.85rem;background:#FAFBFC;color:var(--ink);transition:border-color .15s;}
+.drawer-field input:focus,.drawer-field select:focus,.drawer-field textarea:focus{outline:none;border-color:var(--accent);}
 .drawer-field textarea{resize:vertical;min-height:60px;}
-.drawer-field .hint{font-size:0.7rem;color:var(--ink-soft);}
-.drawer-footer{
-  flex-shrink:0;padding:16px 24px;background:var(--card);
-  border-top:1px solid var(--line);display:flex;align-items:center;gap:12px;
-}
-.drawer-footer .save-msg{font-size:0.8rem;color:var(--ink-soft);flex:1;}
-.drawer-footer .save-msg.ok{color:var(--good);}
-.drawer-footer .save-msg.err{color:var(--bad);}
-
-/* ── Password gate ── */
-.drive-bar{
-  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
-  background:#FFFBF3;border:1px solid var(--brass-soft);
-  border-radius:8px;padding:10px 16px;margin-bottom:24px;
-}
-.drive-bar .drive-status{font-size:0.82rem;color:var(--ink-soft);flex:1;min-width:160px;}
-.drive-bar .drive-status strong{color:var(--ink);}
-.drive-bar .drive-status.connected{color:var(--good);}
-.drive-bar .drive-status.error{color:var(--bad);}
-.drive-pill{
-  display:inline-flex;align-items:center;gap:6px;
-  font-family:'IBM Plex Mono',monospace;font-size:0.72rem;
-  padding:5px 11px;border-radius:999px;border:1px solid var(--line);
-  background:var(--card);cursor:pointer;transition:background .12s;color:var(--ink);
-}
-.drive-pill:hover{background:#F1ECDF;}
-.drive-pill.connected{border-color:var(--good);color:var(--good);}
-.drive-pill svg{width:14px;height:14px;flex-shrink:0;}
-.drive-folder-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px;}
-.drive-folder-row input{
-  flex:1;min-width:180px;padding:7px 10px;border:1px solid var(--line);
-  border-radius:6px;font-size:0.85rem;background:#FCFBF8;
-}
-.drive-folder-row input:focus{outline:none;border-color:var(--brass);}
-.sync-spinner{display:none;width:14px;height:14px;border:2px solid var(--line);border-top-color:var(--brass);border-radius:50%;animation:spin .7s linear infinite;}
-@keyframes spin{to{transform:rotate(360deg);}}
-
-/* ── Channel production table ── */
-#prodTable thead th{text-align:right;white-space:nowrap;font-size:0.68rem;}
-#prodTable thead th:first-child{text-align:left;min-width:190px;position:sticky;left:0;background:var(--card);z-index:1;}
-#prodTable tbody td{text-align:right;white-space:nowrap;font-family:'IBM Plex Mono',monospace;font-size:0.82rem;}
-#prodTable tbody td:first-child{text-align:left;font-family:'Inter',sans-serif;font-size:0.85rem;font-weight:500;position:sticky;left:0;background:#FCFBF8;z-index:1;}
-#prodTable tbody tr:hover td{background:#F1ECDF;}
-#prodTable tbody tr:hover td:first-child{background:#F1ECDF;}
-#prodTable tfoot td{text-align:right;font-weight:700;font-family:'IBM Plex Mono',monospace;font-size:0.83rem;border-top:2px solid var(--line);background:#F7F4EE;}
-#prodTable tfoot td:first-child{text-align:left;font-family:'Inter',sans-serif;position:sticky;left:0;background:#F7F4EE;z-index:1;}
-.prod-ota-share{font-size:0.72rem;color:var(--ink-soft);font-family:'IBM Plex Mono',monospace;display:block;margin-top:2px;}
-
-footer{text-align:center;color:var(--ink-soft);font-size:0.78rem;margin-top:20px;}
-
-/* ── Drive header button (top-right) ── */
-.drive-header-btn{
-  display:inline-flex;align-items:center;gap:7px;
-  font-family:'IBM Plex Mono',monospace;font-size:0.72rem;font-weight:500;
-  padding:7px 13px;border-radius:999px;border:1px solid var(--line);
-  background:var(--card);cursor:pointer;transition:background .12s,border-color .12s;
-  color:var(--ink-soft);white-space:nowrap;
-}
-.drive-header-btn:hover{background:#F1ECDF;border-color:var(--brass-soft);}
-.drive-header-btn.connected{border-color:var(--good);color:var(--good);}
-.drive-header-btn.error{border-color:var(--bad);color:var(--bad);}
-.drive-header-btn .drive-dot{
-  width:7px;height:7px;border-radius:50%;background:var(--ink-soft);flex-shrink:0;
-}
-.drive-header-btn.connected .drive-dot{background:var(--good);}
-.drive-header-btn.error .drive-dot{background:var(--bad);}
-
-/* ── Drive tab panel ── */
-.drive-tab-section{margin-bottom:32px;}
-.drive-tab-section h2{font-family:'Fraunces',serif;font-weight:600;font-size:1.1rem;margin:0 0 4px;}
-.drive-tab-section .sub{color:var(--ink-soft);font-size:0.84rem;margin:0 0 18px;display:block;}
-.drive-connect-card{
-  background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
-  padding:28px 28px 24px;display:flex;align-items:center;gap:20px;flex-wrap:wrap;
-}
-.drive-connect-card .drive-g-logo svg{width:36px;height:36px;}
-.drive-connect-card h3{font-family:'Fraunces',serif;font-size:1rem;font-weight:600;margin:0 0 4px;}
-.drive-connect-card p{color:var(--ink-soft);font-size:0.84rem;margin:0;}
-.drive-status-bar{
-  background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
-  padding:14px 18px;display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap;
-}
-.drive-status-bar .status-dot{width:8px;height:8px;border-radius:50%;background:var(--ink-soft);flex-shrink:0;}
-.drive-status-bar.connected .status-dot{background:var(--good);}
-.drive-status-bar.error .status-dot{background:var(--bad);}
-.drive-status-bar .status-text{font-size:0.84rem;flex:1;}
-.drive-status-bar.connected .status-text{color:var(--good);}
-.drive-status-bar.error .status-text{color:var(--bad);}
-.drive-folders-card{
-  background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:22px 24px;
-}
-.drive-folders-card h3{font-family:'Inter',sans-serif;font-size:0.78rem;font-weight:600;
-  text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-soft);margin:0 0 16px;}
-.drive-folder-entry{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:14px;}
-.drive-folder-entry:last-child{margin-bottom:0;}
-.drive-folder-entry label{
-  font-size:0.78rem;text-transform:uppercase;letter-spacing:0.05em;
-  color:var(--ink-soft);min-width:150px;font-weight:500;
-}
-.drive-folder-entry input{
-  flex:1;min-width:200px;padding:8px 11px;border:1px solid var(--line);
-  border-radius:6px;font-size:0.88rem;background:#FCFBF8;color:var(--ink);
-  font-family:'Inter',sans-serif;
-}
-.drive-folder-entry input:focus{outline:none;border-color:var(--brass);}
-.drive-folder-entry .folder-hint{font-size:0.72rem;color:var(--ink-soft);min-width:160px;}
-.drive-folder-entry .coming-soon{
-  font-size:0.68rem;color:var(--brass);font-family:'IBM Plex Mono',monospace;
-  border:1px solid var(--brass-soft);padding:2px 8px;border-radius:999px;
-}
-.drive-actions-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:20px;}
-.drive-sync-info{font-size:0.75rem;color:var(--ink-soft);font-family:'IBM Plex Mono',monospace;}
-.drive-divider{border:none;border-top:1px solid var(--line);margin:28px 0;}
-.drive-notice{
-  background:#FFFBF3;border:1px solid var(--brass-soft);border-radius:var(--radius);
-  padding:14px 18px;font-size:0.82rem;color:var(--ink-soft);line-height:1.55;
-}
-.drive-notice strong{color:var(--ink);}
+.drawer-field .hint{font-size:0.68rem;color:var(--ink-soft);}
+.drawer-footer{flex-shrink:0;padding:14px 20px;background:var(--card);border-top:1px solid var(--line);display:flex;align-items:center;gap:10px;}
+.drawer-save-msg{font-size:0.78rem;color:var(--ink-soft);flex:1;}
+.drawer-save-msg.ok{color:var(--good);}
+.drawer-save-msg.err{color:var(--bad);}
 </style>
 </head>
 <body>
@@ -614,7 +522,7 @@ footer{text-align:center;color:var(--ink-soft);font-size:0.78rem;margin-top:20px
 </div>
 
 <!-- Sync status banner (shown briefly after a sync completes) -->
-<div id="csvStatusBanner" style="display:none;background:#FFFBF3;border-bottom:1px solid var(--brass-soft);
+<div id="csvStatusBanner" style="display:none;background:var(--accent-soft);border-bottom:1px solid var(--blue-soft);
   padding:8px 32px;font-size:0.8rem;color:var(--ink-soft);text-align:center;"></div>
 
 <nav class="tab-nav" role="tablist">
@@ -629,12 +537,44 @@ footer{text-align:center;color:var(--ink-soft);font-size:0.78rem;margin-top:20px
 <!-- ═══════════════════ DASHBOARD TAB ═══════════════════ -->
 <div id="tab-dashboard" class="tab-panel active">
 
-  <section class="cards" id="summaryCards"></section>
+  <!-- Stat tiles — StayNTouch style colored cards -->
+  <div class="stat-tiles" id="summaryCards"></div>
 
+  <!-- Analytics — variance vs budget -->
   <section>
     <div class="section-head">
-      <h2>Property setup</h2>
-      <span class="sub">Total rooms — used to calculate RevPAR and available room-nights</span>
+      <h2>Variance vs Budget</h2>
+      <span class="sub" id="analyticsSubLabel"></span>
+    </div>
+    <div class="analytics-grid" id="analyticsGrid"></div>
+  </section>
+
+  <!-- Forecast — projected end of month -->
+  <section>
+    <div class="section-head">
+      <h2>Month-End Forecast</h2>
+      <span class="sub">Projected based on current daily pace — days elapsed vs. days remaining</span>
+    </div>
+    <div class="forecast-grid" id="forecastGrid"></div>
+  </section>
+
+  <!-- STLY Booking Pace — same time last year comparison -->
+  <section>
+    <div class="section-head">
+      <h2>Booking Pace — Same Time Last Year</h2>
+    </div>
+    <div class="pace-stly" id="stlyPanel">
+      <h3 id="stlyTitle">Reservations Created: Trailing 365 Days</h3>
+      <p class="stly-sub" id="stlySub"></p>
+      <div class="stly-grid" id="stlyGrid"></div>
+    </div>
+  </section>
+
+  <!-- Property setup -->
+  <section>
+    <div class="section-head">
+      <h2>Property Setup</h2>
+      <span class="sub">Total rooms — used to calculate RevPAR across all tabs</span>
     </div>
     <div class="panel">
       <div class="form-grid" style="grid-template-columns:220px auto;">
@@ -647,10 +587,11 @@ footer{text-align:center;color:var(--ink-soft);font-size:0.78rem;margin-top:20px
     </div>
   </section>
 
+  <!-- Booking pace snapshots -->
   <section>
     <div class="section-head">
-      <h2>Booking pace — upcoming months</h2>
-      <span class="sub">On-the-books figures vs. same month last year</span>
+      <h2>On-Books Pace Snapshots</h2>
+      <span class="sub">Manual on-the-books figures vs. same month last year actuals</span>
     </div>
     <div class="panel">
       <form id="paceForm">
@@ -668,11 +609,11 @@ footer{text-align:center;color:var(--ink-soft);font-size:0.78rem;margin-top:20px
             <input type="date" id="p-asof" required>
           </div>
           <div class="field">
-            <label for="p-revenue">Revenue on the books ($)</label>
+            <label for="p-revenue">Revenue on the books</label>
             <input type="number" id="p-revenue" step="0.01" placeholder="50000" required>
           </div>
           <div class="field">
-            <label for="p-adr">ADR on the books ($)</label>
+            <label for="p-adr">ADR on the books</label>
             <input type="number" id="p-adr" step="0.01" placeholder="185.00">
           </div>
           <div class="field">
@@ -680,7 +621,7 @@ footer{text-align:center;color:var(--ink-soft);font-size:0.78rem;margin-top:20px
             <input type="number" id="p-occ" step="0.1" min="0" max="100" placeholder="38.0">
           </div>
         </div>
-        <div style="margin-top:14px;">
+        <div style="margin-top:12px;">
           <button type="submit" class="btn-primary" id="paceSubmitBtn">Save pace snapshot</button>
         </div>
         <div class="form-msg" id="paceMsg"></div>
@@ -691,13 +632,13 @@ footer{text-align:center;color:var(--ink-soft);font-size:0.78rem;margin-top:20px
 
   <section>
     <div class="section-head">
-      <h2>Pace vs. last year</h2>
+      <h2>Pace vs. Last Year</h2>
       <span class="sub" id="paceCount"></span>
     </div>
     <div class="panel" style="padding:0;overflow-x:auto;">
       <table>
         <thead><tr>
-          <th>Period</th><th>As of</th>
+          <th style="text-align:left;">Period</th><th style="text-align:left;">As of</th>
           <th>On-books Rev.</th><th>LY Actual Rev.</th><th>Rev. Pace</th>
           <th>On-books RevPAR</th><th>LY RevPAR</th><th>RevPAR Pace</th>
           <th></th>
@@ -710,12 +651,12 @@ footer{text-align:center;color:var(--ink-soft);font-size:0.78rem;margin-top:20px
 
   <section>
     <div class="section-head">
-      <h2>Revenue pace chart</h2>
+      <h2>Revenue Pace Chart</h2>
       <span class="sub">100% = on pace with last year</span>
     </div>
     <div class="chart-card" style="max-width:100%;">
       <h3>Revenue Pace by Month</h3>
-      <div class="fx">on-books revenue ÷ prior-year actual revenue</div>
+      <div class="fx">On-books revenue ÷ prior-year actual revenue</div>
       <canvas id="chartPace"></canvas>
     </div>
   </section>
@@ -931,6 +872,7 @@ footer{text-align:center;color:var(--ink-soft);font-size:0.78rem;margin-top:20px
             <th>Room Fees — Budget</th><th>Room Fees — Actual</th><th>Room Fees — Var $</th><th>Room Fees — Var %</th>
             <th>Restaurant — Budget</th><th>Restaurant — Actual</th><th>Restaurant — Var $</th><th>Restaurant — Var %</th>
             <th>Parking — Budget</th><th>Parking — Actual</th><th>Parking — Var $</th><th>Parking — Var %</th>
+            <th>Misc — Budget</th><th>Misc — Actual</th><th>Misc — Var $</th><th>Misc — Var %</th>
             <th>Total — Budget</th><th>Total — Actual</th><th>Total — Var $</th><th>Total — Var %</th>
           </tr>
         </thead>
@@ -975,6 +917,10 @@ footer{text-align:center;color:var(--ink-soft);font-size:0.78rem;margin-top:20px
           <label for="fb-parking">Parking ($)</label>
           <input type="number" id="fb-parking" step="0.01" placeholder="3200">
         </div>
+        <div class="field">
+          <label for="fb-misc">Misc. Revenue ($)</label>
+          <input type="number" id="fb-misc" step="0.01" placeholder="1500">
+        </div>
         <button type="button" class="btn-primary" id="finBudgetSaveBtn" style="align-self:end;">Save budget</button>
       </div>
       <div class="form-msg" id="finBudgetMsg"></div>
@@ -986,7 +932,7 @@ footer{text-align:center;color:var(--ink-soft);font-size:0.78rem;margin-top:20px
         <thead>
           <tr>
             <th style="text-align:left;">Period</th>
-            <th>Room Revenue</th><th>Room Fees</th><th>Restaurant</th><th>Parking</th><th>Total</th><th></th>
+            <th>Room Revenue</th><th>Room Fees</th><th>Restaurant</th><th>Parking</th><th>Misc.</th><th>Total</th><th></th>
           </tr>
         </thead>
         <tbody id="finBudgetBody"></tbody>
@@ -1002,8 +948,8 @@ footer{text-align:center;color:var(--ink-soft);font-size:0.78rem;margin-top:20px
       <span class="sub">Room revenue is pulled automatically from your monthly data — enter fees, restaurant, and parking here</span>
     </div>
     <div class="panel" style="margin-bottom:20px;">
-      <div style="background:#FFFBF3;border:1px solid var(--brass-soft);border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:0.82rem;color:var(--ink-soft);">
-        <strong style="color:var(--brass);">Room Revenue</strong> is sourced automatically from the monthly records in your History tab — no entry needed here.
+      <div style="background:var(--accent-soft);border:1px solid var(--blue-soft);border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:0.82rem;color:var(--ink-soft);">
+        <strong style="color:var(--accent);">Room Revenue</strong> is sourced automatically from the monthly records in your History tab — no entry needed here.
       </div>
       <div class="form-grid" style="grid-template-columns:repeat(2,1fr) repeat(3,1fr) auto;gap:14px;align-items:end;">
         <div class="field">
@@ -1026,6 +972,10 @@ footer{text-align:center;color:var(--ink-soft);font-size:0.78rem;margin-top:20px
           <label for="fa-parking">Parking ($)</label>
           <input type="number" id="fa-parking" step="0.01" placeholder="3100">
         </div>
+        <div class="field">
+          <label for="fa-misc">Misc. Revenue ($)</label>
+          <input type="number" id="fa-misc" step="0.01" placeholder="1200">
+        </div>
         <button type="button" class="btn-primary" id="finActualsSaveBtn" style="align-self:end;">Save</button>
       </div>
       <div class="form-msg" id="finActualsMsg"></div>
@@ -1037,8 +987,8 @@ footer{text-align:center;color:var(--ink-soft);font-size:0.78rem;margin-top:20px
         <thead>
           <tr>
             <th style="text-align:left;">Period</th>
-            <th>Room Revenue <span style="font-weight:400;color:var(--brass);font-size:0.65rem;">(auto)</span></th>
-            <th>Room Fees</th><th>Restaurant</th><th>Parking</th><th>Total</th><th></th>
+            <th>Room Revenue <span style="font-weight:400;color:var(--accent);font-size:0.65rem;">(auto)</span></th>
+            <th>Room Fees</th><th>Restaurant</th><th>Parking</th><th>Misc.</th><th>Total</th><th></th>
           </tr>
         </thead>
         <tbody id="finActualsBody"></tbody>
@@ -1063,8 +1013,8 @@ footer{text-align:center;color:var(--ink-soft);font-size:0.78rem;margin-top:20px
   <div class="drive-connect-card" id="driveConnectCard">
     <div class="drive-g-logo">
       <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M8.5 3.5L3 12.5l3.5 6h11l3.5-6L16.5 3.5H8.5z" stroke="var(--brass)" stroke-width="1.5" fill="none"/>
-        <path d="M3 12.5h18M12 3.5L6.5 20M12 3.5L17.5 20" stroke="var(--brass)" stroke-width="1.5"/>
+        <path d="M8.5 3.5L3 12.5l3.5 6h11l3.5-6L16.5 3.5H8.5z" stroke="var(--accent)" stroke-width="1.5" fill="none"/>
+        <path d="M3 12.5h18M12 3.5L6.5 20M12 3.5L17.5 20" stroke="var(--accent)" stroke-width="1.5"/>
       </svg>
     </div>
     <div style="flex:1;">
@@ -1103,7 +1053,7 @@ footer{text-align:center;color:var(--ink-soft);font-size:0.78rem;margin-top:20px
         <span class="folder-hint">Weekly channel snapshots</span>
       </div>
       <div class="drive-folder-entry" style="opacity:0.55;">
-        <label style="color:var(--brass);">Financial Revenue</label>
+        <label style="color:var(--accent);">Financial Revenue</label>
         <input type="text" id="driveFinRevFolderName" placeholder="Financial transaction reports" disabled>
         <span class="coming-soon">coming soon</span>
       </div>
@@ -1253,7 +1203,7 @@ document.getElementById('driveHeaderBtn').addEventListener('click',()=>{
 
 /* ─── Main render ─── */
 function render(){
-  renderSummary();
+  renderSummary(); // also calls renderAnalytics, renderForecast, renderSTLY
   renderPace();
   renderTable();
   const activeTab=document.querySelector('.tab-btn.active')?.dataset.tab;
@@ -1267,7 +1217,7 @@ function render(){
 }
 
 /* ════════════════════════════════════════
-   DASHBOARD — summary cards
+   DASHBOARD — stat tiles (StayNTouch style)
 ════════════════════════════════════════ */
 function currentAndPriorYear(){
   const yrs=[...new Set(entries.map(e=>e.year))].sort((a,b)=>b-a);
@@ -1283,45 +1233,269 @@ function aggregateYear(year){
   if(totalRooms){const arn=rows.reduce((s,r)=>s+availableRoomNights(r.year,r.month),0);avgRevpar=revenue/arn;}
   return{revenue,avgAdr,avgOcc,avgRevpar};
 }
-function aggregateYearYTD(year, throughMonth){
-  // Sum only months 1–throughMonth for apples-to-apples YTD comparison
+function aggregateYearYTD(year,throughMonth){
   const rows=entries.filter(e=>e.year===year&&e.month<=throughMonth);
   if(!rows.length)return null;
   return rows.reduce((s,r)=>s+r.revenue,0);
 }
+
+function tileDelta(cur, prior, higherIsBetter=true){
+  if(prior===undefined||prior===null||!isFinite(prior)||prior===0) return `<span class="tile-delta flat">No prior data</span>`;
+  const p=((cur-prior)/Math.abs(prior))*100;
+  const cls=Math.abs(p)<0.05?'flat':((p>0)===higherIsBetter?'pos':'neg');
+  const arrow=p>0?'▲':'▼';
+  return `<span class="tile-delta ${cls}">${arrow} ${Math.abs(p).toFixed(1)}% vs LY</span>`;
+}
+
 function renderSummary(){
   const wrap=document.getElementById('summaryCards');
   wrap.innerHTML='';
   const{current,prior}=currentAndPriorYear();
-  if(!current){wrap.innerHTML=`<div class="card"><div class="label">No data yet</div><div class="value" style="font-size:1rem;color:var(--ink-soft);">Import a CSV or add monthly entries in the History tab</div></div>`;return;}
+  if(!current){
+    wrap.innerHTML=`<div class="stat-tile navy" style="grid-column:span 4"><div class="tile-label">No data yet</div><div class="tile-value" style="font-size:1rem;">Import a CSV or add monthly entries in the History tab</div></div>`;
+    return;
+  }
   const ca=aggregateYear(current),pa=prior?aggregateYear(prior):null;
-
-  // YTD revenue: current year up to the latest month on file, vs same period last year
   const currentMonths=entries.filter(e=>e.year===current).map(e=>e.month);
   const latestMonth=currentMonths.length?Math.max(...currentMonths):12;
   const ytdCurrent=aggregateYearYTD(current,latestMonth);
   const ytdPrior=prior?aggregateYearYTD(prior,latestMonth):null;
-  const ytdMonthName=MONTHS[latestMonth-1];
-  const ytdLabel=latestMonth===12?`Revenue YTD — ${current}`:`Revenue YTD — Jan–${ytdMonthName} ${current}`;
-  const ytdDelta=ytdCurrent!==null&&ytdPrior!==null
-    ? (()=>{
-        const p=((ytdCurrent-ytdPrior)/Math.abs(ytdPrior))*100;
-        const cls=Math.abs(p)<0.05?'flat':(p>0?'pos':'neg');
-        const lyLabel=`Jan${latestMonth>1?`–${ytdMonthName}`:''} ${prior}`;
-        return`<span class="delta ${cls}">${p>0?'+':''}${p.toFixed(1)}% vs ${lyLabel}</span>`;
-      })()
-    : `<span class="delta flat">no prior-year data</span>`;
+  const ytdLabel=latestMonth===12?`Revenue YTD ${current}`:`Revenue Jan–${MONTHS[latestMonth-1].slice(0,3)} ${current}`;
 
-  [
-    {label:ytdLabel, val:ytdCurrent!==null?fmtMoney(ytdCurrent):'—', d:ytdDelta},
-    {label:`Avg ADR — ${current}`,val:fmtMoney2(ca.avgAdr),d:deltaHTML(ca.avgAdr,pa?.avgAdr)},
-    {label:`Avg Occupancy — ${current}`,val:fmtPct(ca.avgOcc),d:deltaHTML(ca.avgOcc,pa?.avgOcc)},
-    {label:`RevPAR — ${current}`,val:ca.avgRevpar===null?'Set room count':fmtMoney2(ca.avgRevpar),d:ca.avgRevpar===null?'':deltaHTML(ca.avgRevpar,pa?.avgRevpar)},
-  ].forEach(c=>{
-    const div=document.createElement('div');div.className='card';
-    div.innerHTML=`<div class="label">${c.label}</div><div class="value">${c.val}</div>${c.d}`;
+  const tiles=[
+    {color:'green', label:ytdLabel,
+     val:ytdCurrent!==null?fmtMoney(ytdCurrent):'—',
+     delta:ytdCurrent!==null&&ytdPrior!==null?tileDelta(ytdCurrent,ytdPrior):'<span class="tile-delta flat">No prior data</span>'},
+    {color:'blue',  label:`Avg ADR — ${current}`,   val:fmtMoney2(ca.avgAdr),  delta:tileDelta(ca.avgAdr,pa?.avgAdr)},
+    {color:'orange',label:`Avg Occupancy — ${current}`,val:fmtPct(ca.avgOcc),  delta:tileDelta(ca.avgOcc,pa?.avgOcc)},
+    {color:'purple',label:`RevPAR — ${current}`,
+     val:ca.avgRevpar===null?'Set rooms':fmtMoney2(ca.avgRevpar),
+     delta:ca.avgRevpar===null?'<span class="tile-delta flat">Set room count</span>':tileDelta(ca.avgRevpar,pa?.avgRevpar)},
+  ];
+  tiles.forEach(t=>{
+    const div=document.createElement('div');
+    div.className=`stat-tile ${t.color}`;
+    div.innerHTML=`<div class="tile-label">${t.label}</div><div class="tile-value">${t.val}</div>${t.delta}`;
     wrap.appendChild(div);
   });
+  renderAnalytics();
+  renderForecast();
+  renderSTLY();
+}
+
+/* ════════════════════════════════════════
+   ANALYTICS — variance vs budget
+════════════════════════════════════════ */
+function renderAnalytics(){
+  const grid=document.getElementById('analyticsGrid');
+  const sub=document.getElementById('analyticsSubLabel');
+  if(!grid)return;
+  grid.innerHTML='';
+
+  const{current}=currentAndPriorYear();
+  if(!current||!finBudget.length){
+    grid.innerHTML=`<div class="analytics-card" style="grid-column:span 3"><div class="ac-label">No budget data</div><div style="color:var(--ink-soft);font-size:0.82rem;">Set a monthly budget in the Financials tab to see variance analysis here.</div></div>`;
+    return;
+  }
+
+  // YTD totals
+  const currentMonths=entries.filter(e=>e.year===current).map(e=>e.month);
+  const latestMonth=currentMonths.length?Math.max(...currentMonths):0;
+  if(!latestMonth) return;
+  sub.textContent=`Year-to-date through ${MONTHS[latestMonth-1]} ${current}`;
+
+  let ytdActRev=0,ytdBudRev=0,ytdActOcc=0,ytdBudOcc=0,ytdActADR=0,ytdBudADR=0;
+  let occMonths=0,adrMonths=0;
+
+  for(let m=1;m<=latestMonth;m++){
+    const k=keyFor(current,m);
+    const act=entries.find(e=>e.year===current&&e.month===m);
+    const bud=finBudget.find(b=>b.key===k);
+    if(act){ ytdActRev+=act.revenue; ytdActOcc+=act.occ; ytdActADR+=act.adr; occMonths++; adrMonths++; }
+    if(bud){ ytdBudRev+=(bud.roomRev||0); }
+  }
+
+  // Budget for occ/ADR — use average from pace entries or prior year
+  const priorEntries=entries.filter(e=>e.year===current-1&&e.month<=latestMonth);
+  const priorRev=priorEntries.reduce((s,e)=>s+e.revenue,0);
+
+  function acCard(label, rows){
+    const card=document.createElement('div');
+    card.className='analytics-card';
+    card.innerHTML=`<div class="ac-label">${label}</div>`+
+      rows.map(r=>{
+        const diff=r.actual-r.budget;
+        const pct=r.budget!==0?((diff/Math.abs(r.budget))*100):null;
+        const cls=pct===null?'flat':Math.abs(pct)<0.1?'flat':(diff>=0?'pos':'neg');
+        const varStr=pct===null?'—':`${diff>=0?'+':''}${pct.toFixed(1)}%`;
+        return `<div class="ac-row">
+          <span class="ac-key">${r.label}</span>
+          <span class="ac-val">${r.valStr}</span>
+          <span class="ac-var ${cls}">${varStr}</span>
+        </div>`;
+      }).join('');
+    return card;
+  }
+
+  // Revenue variance card
+  const revAvgBudPerMonth=ytdBudRev/latestMonth;
+  grid.appendChild(acCard('Revenue vs. Budget',[
+    {label:'YTD Actual',   actual:ytdActRev,  budget:ytdBudRev, valStr:fmtMoney(ytdActRev)},
+    {label:'YTD Budget',   actual:ytdBudRev,  budget:ytdBudRev, valStr:fmtMoney(ytdBudRev)},
+    {label:`Variance`,     actual:ytdActRev,  budget:ytdBudRev, valStr:fmtMoney(ytdActRev-ytdBudRev)+(ytdActRev>=ytdBudRev?' ▲':' ▼')},
+  ]));
+
+  // ADR variance card
+  const avgActADR=adrMonths>0?ytdActADR/adrMonths:0;
+  const priorADRAvg=priorEntries.length?priorEntries.reduce((s,e)=>s+e.adr,0)/priorEntries.length:null;
+  grid.appendChild(acCard('ADR vs. Last Year',[
+    {label:'YTD Actual ADR',  actual:avgActADR,    budget:priorADRAvg||0, valStr:fmtMoney2(avgActADR)},
+    {label:'LY ADR',          actual:priorADRAvg||0,budget:priorADRAvg||0,valStr:priorADRAvg?fmtMoney2(priorADRAvg):'—'},
+    {label:'Variance',        actual:avgActADR,    budget:priorADRAvg||0, valStr:priorADRAvg?fmtMoney2(avgActADR-(priorADRAvg||0)):'—'},
+  ]));
+
+  // Occupancy variance card
+  const avgActOcc=occMonths>0?ytdActOcc/occMonths:0;
+  const priorOccAvg=priorEntries.length?priorEntries.reduce((s,e)=>s+e.occ,0)/priorEntries.length:null;
+  grid.appendChild(acCard('Occupancy vs. Last Year',[
+    {label:'YTD Actual Occ.',  actual:avgActOcc,     budget:priorOccAvg||0, valStr:fmtPct(avgActOcc)},
+    {label:'LY Occupancy',     actual:priorOccAvg||0,budget:priorOccAvg||0, valStr:priorOccAvg?fmtPct(priorOccAvg):'—'},
+    {label:'Variance (pts)',   actual:avgActOcc,     budget:priorOccAvg||0, valStr:priorOccAvg?`${(avgActOcc-priorOccAvg).toFixed(1)} pts`:'—'},
+  ]));
+}
+
+/* ════════════════════════════════════════
+   FORECAST — projected end-of-month
+   Based on daily pace: revenue/day elapsed × days in month
+════════════════════════════════════════ */
+function renderForecast(){
+  const grid=document.getElementById('forecastGrid');
+  if(!grid)return;
+  grid.innerHTML='';
+
+  const today=new Date();
+  const{current}=currentAndPriorYear();
+  if(!current||!dailyEntries.length){
+    grid.innerHTML=`<div class="forecast-card" style="grid-column:span 4"><div class="fc-month">No daily data</div><div class="fc-label" style="color:var(--ink-soft);">Import Business on the Books CSV data to see month-end forecasts.</div></div>`;
+    return;
+  }
+
+  // Build forecasts for current + next 3 months
+  const months=[];
+  for(let i=0;i<4;i++){
+    let y=today.getFullYear(),m=today.getMonth()+1+i;
+    if(m>12){m-=12;y++;}
+    months.push({year:y,month:m});
+  }
+
+  months.forEach(({year,month})=>{
+    const daysTotal=daysInMonth(year,month);
+    const daysElapsed=year===today.getFullYear()&&month===today.getMonth()+1
+      ?Math.min(today.getDate(),daysTotal) : daysTotal;
+    const dailyForMonth=dailyEntries.filter(d=>d.year===year&&d.month===month);
+    const actualRev=dailyForMonth.reduce((s,d)=>s+(d.revenue||0),0);
+    const lyEntry=entries.find(e=>e.year===year-1&&e.month===month);
+    const lyRev=lyEntry?lyEntry.revenue:null;
+
+    let projected=null,pct=null,barW=0;
+    if(actualRev>0&&daysElapsed>0){
+      const dailyRate=actualRev/daysElapsed;
+      projected=dailyRate*daysTotal;
+      if(lyRev){ pct=(projected/lyRev)*100; barW=Math.min(pct,150); }
+    }
+
+    const isOnPace=pct!==null&&pct>=100;
+    const card=document.createElement('div');
+    card.className=`forecast-card ${pct===null?'':(isOnPace?'on-pace':'below-pace')}`;
+    card.innerHTML=`
+      <div class="fc-month">${MONTHS[month-1]} ${year}</div>
+      <div class="fc-projected">${projected!==null?fmtMoney(projected):'—'}</div>
+      <div class="fc-label">Projected month-end${daysElapsed<daysTotal?` (${daysElapsed}/${daysTotal} days)`:' (complete)'}</div>
+      ${lyRev?`
+        <div class="fc-bar-wrap"><div class="fc-bar ${isOnPace?'over':'under'}" style="width:${Math.min(barW,100)}%"></div></div>
+        <div class="fc-pct ${isOnPace?'over':'under'}">${pct!==null?`${pct.toFixed(1)}% of LY ${fmtMoney(lyRev)}`:''}</div>
+      `:`<div class="fc-label" style="margin-top:8px;color:var(--ink-xsoft);">No LY data to compare</div>`}
+    `;
+    grid.appendChild(card);
+  });
+}
+
+/* ════════════════════════════════════════
+   STLY — Same Time Last Year Booking Pace
+   Exact logic per spec:
+   Today = July 30, 2026
+   Current window: Jul 30, 2025 → Jul 30, 2026 | Arrival: Aug 1–31, 2026
+   Prior window:   Jul 30, 2024 → Jul 30, 2025 | Arrival: Aug 1–31, 2025
+   We approximate using daily BotB data (rms field) for the arrival month
+════════════════════════════════════════ */
+function renderSTLY(){
+  const panel=document.getElementById('stlyPanel');
+  const titleEl=document.getElementById('stlyTitle');
+  const subEl=document.getElementById('stlySub');
+  const gridEl=document.getElementById('stlyGrid');
+  if(!panel||!gridEl)return;
+
+  const today=new Date();
+  const pad=n=>String(n).padStart(2,'0');
+
+  // Next month is the arrival window
+  let arrYear=today.getFullYear(),arrMonth=today.getMonth()+2;
+  if(arrMonth>12){arrMonth=1;arrYear++;}
+  const arrMonthName=MONTHS[arrMonth-1];
+
+  // Date label strings
+  const curFrom=`${today.getFullYear()-1}-${pad(today.getMonth()+1)}-${pad(today.getDate())}`;
+  const curTo=`${today.getFullYear()}-${pad(today.getMonth()+1)}-${pad(today.getDate())}`;
+  const lyFrom=`${today.getFullYear()-2}-${pad(today.getMonth()+1)}-${pad(today.getDate())}`;
+  const lyTo=`${today.getFullYear()-1}-${pad(today.getMonth()+1)}-${pad(today.getDate())}`;
+
+  titleEl.textContent=`Booking Pace — ${arrMonthName} Arrivals`;
+  subEl.textContent=`Current: ${curFrom} to ${curTo} | Prior year: ${lyFrom} to ${lyTo}`;
+
+  // Get daily BotB data (rms field) for the arrival months
+  const curDays=dailyEntries.filter(d=>d.year===arrYear&&d.month===arrMonth);
+  const lyDays=dailyEntries.filter(d=>d.year===arrYear-1&&d.month===arrMonth);
+
+  // Sum rooms on books for each window
+  const curRms=curDays.reduce((s,d)=>s+(d.rms||0),0);
+  const lyRms=lyDays.reduce((s,d)=>s+(d.rms||0),0);
+
+  // Revenue from pace entries (on-books)
+  const curPace=paceEntries.find(p=>p.year===arrYear&&p.month===arrMonth);
+  const lyPace=paceEntries.find(p=>p.year===arrYear-1&&p.month===arrMonth);
+  const curRev=curPace?curPace.revenue:null;
+  const lyRev=lyPace?lyPace.revenue:null;
+
+  // LY actuals
+  const lyActual=entries.find(e=>e.year===arrYear-1&&e.month===arrMonth);
+
+  function stlyVar(cur,ly){
+    if(cur===null||cur===undefined||!ly)return null;
+    return((cur-ly)/Math.abs(ly))*100;
+  }
+
+  function stlyCell(label,curVal,lyVal,fmt,unit=''){
+    const v=stlyVar(curVal,lyVal);
+    const cls=v===null?'flat':Math.abs(v)<0.1?'flat':(v>=0?'pos':'neg');
+    const varStr=v===null?'No LY data':`${v>=0?'+':''}${v.toFixed(1)}% vs STLY`;
+    return `<div class="stly-cell">
+      <div class="sc-label">${label}</div>
+      <div class="sc-cur">${curVal!==null&&curVal!==undefined?fmt(curVal)+unit:'—'}</div>
+      <div class="sc-ly">STLY: ${lyVal!==null&&lyVal!==undefined?fmt(lyVal)+unit:'—'}</div>
+      <div class="sc-var ${cls}">${varStr}</div>
+    </div>`;
+  }
+
+  gridEl.innerHTML=
+    stlyCell(`${arrMonthName} ${arrYear} — Rooms on Books`,curRms,lyRms,n=>Math.round(n).toLocaleString())+
+    stlyCell(`On-Books Revenue`,curRev,lyRev,fmtMoney)+
+    stlyCell(`LY ${arrMonthName} ${arrYear-1} — Actual Rev`,lyActual?lyActual.revenue:null,null,fmtMoney)+
+    stlyCell(`On-Books ADR`,curPace?curPace.adr:null,lyPace?lyPace.adr:null,fmtMoney2)+
+    stlyCell(`On-Books Occupancy`,curPace?curPace.occ:null,lyPace?lyPace.occ:null,n=>fmtPct(n))+
+    stlyCell(`RevPAR (on-books)`,
+      curPace&&totalRooms?curPace.revenue/availableRoomNights(arrYear,arrMonth):null,
+      lyPace&&totalRooms?lyPace.revenue/availableRoomNights(arrYear-1,arrMonth):null,
+      fmtMoney2);
 }
 
 /* ════════════════════════════════════════
@@ -1561,7 +1735,7 @@ function renderCalMonthlySummary(){
   const lyRP=ly?revparForEntry(ly):null;
 
   const paceBadge=isPace
-    ?`<span style="font-size:0.62rem;text-transform:uppercase;letter-spacing:0.05em;background:#FFFBF3;border:1px solid var(--brass-soft);color:var(--brass);padding:2px 7px;border-radius:4px;margin-bottom:4px;display:inline-block;">On-books pace</span>`
+    ?`<span style="font-size:0.62rem;text-transform:uppercase;letter-spacing:0.05em;background:var(--accent-soft);border:1px solid var(--blue-soft);color:var(--accent);padding:2px 7px;border-radius:4px;margin-bottom:4px;display:inline-block;">On-books pace</span>`
     :'';
 
   [
@@ -1672,7 +1846,7 @@ function showDayDetail(year,month,day){
 
   let html=`<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
       <h3 style="margin:0;font-family:'Fraunces',serif;font-size:1.05rem;">${curDow} ${MONTHS[month-1]} ${day}, ${year}</h3>
-      <span style="color:var(--ink-soft);font-size:0.82rem;">vs. ${lyLabel}${isSameDay?'':' <span style="color:var(--brass);font-size:0.72rem;">(same weekday)</span>'}</span></div>
+      <span style="color:var(--ink-soft);font-size:0.82rem;">vs. ${lyLabel}${isSameDay?'':' <span style="color:var(--accent);font-size:0.72rem;">(same weekday)</span>'}</span></div>
     <div class="detail-row hdr"><span>Metric</span><span class="num">${year}</span><span class="num">${lyDate?lyDate.year:year-1}</span><span class="num">YoY</span></div>
     ${detailMetricRow('Revenue',cur?.revenue??null,prior?.revenue??null,fmtMoney)}
     ${detailMetricRow('ADR',cur?.adr??null,prior?.adr??null,fmtMoney2)}
@@ -2082,10 +2256,11 @@ document.getElementById('f-rooms').addEventListener('change',async ev=>{
 ════════════════════════════════════════ */
 
 const FIN_CATS=[
-  {key:'roomRev',label:'Room Revenue'},
-  {key:'roomFees',label:'Room Fees'},
+  {key:'roomRev',   label:'Room Revenue'},
+  {key:'roomFees',  label:'Room Fees'},
   {key:'restaurant',label:'Restaurant'},
-  {key:'parking',label:'Parking'},
+  {key:'parking',   label:'Parking'},
+  {key:'misc',      label:'Misc. Revenue'},
 ];
 
 // Pull room revenue from monthly actuals or pace entries — never from finActuals
@@ -2100,15 +2275,15 @@ function getRoomRev(year,month){
   return{value:null,source:null};
 }
 
-// Merge live room revenue with stored fees/restaurant/parking
+// Merge live room revenue with stored fees/restaurant/parking/misc
 function getMergedActual(year,month){
   const key=keyFor(year,month);
   const stored=finActuals.find(a=>a.key===key)||{};
   const rr=getRoomRev(year,month);
-  return{key,year,month,roomRev:rr.value,roomRevSource:rr.source,roomFees:stored.roomFees||0,restaurant:stored.restaurant||0,parking:stored.parking||0};
+  return{key,year,month,roomRev:rr.value,roomRevSource:rr.source,roomFees:stored.roomFees||0,restaurant:stored.restaurant||0,parking:stored.parking||0,misc:stored.misc||0};
 }
 
-function finTotal(r){return(r.roomRev||0)+(r.roomFees||0)+(r.restaurant||0)+(r.parking||0);}
+function finTotal(r){return(r.roomRev||0)+(r.roomFees||0)+(r.restaurant||0)+(r.parking||0)+(r.misc||0);}
 
 function finVarHTML(actual,budget){
   if(actual===null||actual===undefined||budget===null||budget===undefined||budget===0)return`<span class="fin-var flat">—</span>`;
@@ -2158,17 +2333,18 @@ function getAllFinKeys(){
 function renderFinSummaryCards(){
   const wrap=document.getElementById('finSummaryCards');wrap.innerHTML='';
   const allKeys=getAllFinKeys();
-  let totBudget={roomRev:0,roomFees:0,restaurant:0,parking:0};
-  let totActual={roomRev:0,roomFees:0,restaurant:0,parking:0};
+  let totBudget={roomRev:0,roomFees:0,restaurant:0,parking:0,misc:0};
+  let totActual={roomRev:0,roomFees:0,restaurant:0,parking:0,misc:0};
   let hasAny=false;
   allKeys.forEach(k=>{
     const[yr,mo]=k.split('-').map(Number);
     const b=finBudget.find(x=>x.key===k)||null;
     const merged=getMergedActual(yr,mo);
     if(b)FIN_CATS.forEach(c=>{totBudget[c.key]+=(b[c.key]||0);});
-    if(merged.roomRev!==null||merged.roomFees||merged.restaurant||merged.parking){
+    if(merged.roomRev!==null||merged.roomFees||merged.restaurant||merged.parking||merged.misc){
       totActual.roomRev+=(merged.roomRev||0);totActual.roomFees+=(merged.roomFees||0);
-      totActual.restaurant+=(merged.restaurant||0);totActual.parking+=(merged.parking||0);hasAny=true;
+      totActual.restaurant+=(merged.restaurant||0);totActual.parking+=(merged.parking||0);
+      totActual.misc+=(merged.misc||0);hasAny=true;
     }
   });
   if(!hasAny&&!allKeys.length){
@@ -2182,7 +2358,7 @@ function renderFinSummaryCards(){
     const pct=bVal>0?((aVal/bVal)*100):null;
     const barPct=pct!==null?Math.min(pct,100):0;
     const overBudget=pct!==null&&pct>100;
-    const autoNote=cat.key==='roomRev'?`<div style="font-size:0.65rem;color:var(--brass);margin-bottom:2px;">Auto from History</div>`:'';
+    const autoNote=cat.key==='roomRev'?`<div style="font-size:0.65rem;color:var(--accent);margin-bottom:2px;">Auto from History</div>`:'';
     const div=document.createElement('div');div.className='fin-bcard';
     div.innerHTML=`${autoNote}<div class="label">${cat.label}</div><div class="actual">${fmtMoney(aVal)}</div>
       <div class="budget-line">Budget: ${fmtMoney(bVal)}</div>${finVarPctHTML(aVal,bVal||null)}
@@ -2201,26 +2377,24 @@ function renderFinTracker(){
   if(!allKeys.length){empty.style.display='block';document.getElementById('finTrackerSub').textContent='';return;}
   empty.style.display='none';
   document.getElementById('finTrackerSub').textContent=`${allKeys.length} month${allKeys.length===1?'':'s'} tracked`;
-  let sumB={roomRev:0,roomFees:0,restaurant:0,parking:0};
-  let sumA={roomRev:0,roomFees:0,restaurant:0,parking:0};
+  let sumB={roomRev:0,roomFees:0,restaurant:0,parking:0,misc:0};
+  let sumA={roomRev:0,roomFees:0,restaurant:0,parking:0,misc:0};
   allKeys.forEach(k=>{
     const[yr,mo]=k.split('-').map(Number);
     const b=finBudget.find(x=>x.key===k)||null;
     const merged=getMergedActual(yr,mo);
     if(b)FIN_CATS.forEach(c=>{sumB[c.key]+=(b[c.key]||0);});
-    sumA.roomRev+=(merged.roomRev||0);sumA.roomFees+=merged.roomFees;sumA.restaurant+=merged.restaurant;sumA.parking+=merged.parking;
-    const rrLabel=merged.roomRev!==null?`${fmtMoney(merged.roomRev)}<span style="font-size:0.65rem;color:var(--brass);margin-left:4px;">${merged.roomRevSource==='pace'?'pace':'✓'}</span>`:'—';
+    sumA.roomRev+=(merged.roomRev||0);sumA.roomFees+=merged.roomFees;sumA.restaurant+=merged.restaurant;sumA.parking+=merged.parking;sumA.misc+=(merged.misc||0);
+    const rrLabel=merged.roomRev!==null?`${fmtMoney(merged.roomRev)}<span style="font-size:0.65rem;color:var(--accent);margin-left:4px;">${merged.roomRevSource==='pace'?'pace':'✓'}</span>`:'—';
     const bTotVal=b?finTotal(b):null,aTotVal=finTotal(merged);
     const tr=document.createElement('tr');
     let cells=`<td>${MONTHS[mo-1]} ${yr}</td>`;
-    // Room revenue col
-    cells+=`<td>${b?fmtMoney(b.roomRev||0):'—'}</td><td>${rrLabel}</td><td>${finVarHTML(merged.roomRev,b?.roomRev??null)}</td><td>${finVarPctHTML(merged.roomRev,b?.roomRev??null)}</td>`;
-    // Other cats
-    ['roomFees','restaurant','parking'].forEach(cat=>{
+    cells+=`<td class="num">${b?fmtMoney(b.roomRev||0):'—'}</td><td class="num">${rrLabel}</td><td>${finVarHTML(merged.roomRev,b?.roomRev??null)}</td><td>${finVarPctHTML(merged.roomRev,b?.roomRev??null)}</td>`;
+    ['roomFees','restaurant','parking','misc'].forEach(cat=>{
       const bv=b?b[cat]:null,av=merged[cat]||0;
-      cells+=`<td>${bv!==null?fmtMoney(bv):'—'}</td><td>${fmtMoney(av)}</td><td>${finVarHTML(av,bv)}</td><td>${finVarPctHTML(av,bv)}</td>`;
+      cells+=`<td class="num">${bv!==null?fmtMoney(bv):'—'}</td><td class="num">${fmtMoney(av)}</td><td>${finVarHTML(av,bv)}</td><td>${finVarPctHTML(av,bv)}</td>`;
     });
-    cells+=`<td>${bTotVal!==null?fmtMoney(bTotVal):'—'}</td><td>${fmtMoney(aTotVal)}</td><td>${finVarHTML(aTotVal,bTotVal)}</td><td>${finVarPctHTML(aTotVal,bTotVal)}</td>`;
+    cells+=`<td class="num">${bTotVal!==null?fmtMoney(bTotVal):'—'}</td><td class="num">${fmtMoney(aTotVal)}</td><td>${finVarHTML(aTotVal,bTotVal)}</td><td>${finVarPctHTML(aTotVal,bTotVal)}</td>`;
     tr.innerHTML=cells;body.appendChild(tr);
   });
   const totalBudget=finTotal(sumB),totalActual=finTotal(sumA);
@@ -2237,9 +2411,10 @@ function renderFinBudgetTable(){
   [...finBudget].sort((a,b)=>b.year-a.year||b.month-a.month).forEach(b=>{
     const tr=document.createElement('tr');
     tr.innerHTML=`<td>${MONTHS[b.month-1]} ${b.year}</td>
-      <td>${fmtMoney(b.roomRev||0)}</td><td>${fmtMoney(b.roomFees||0)}</td>
-      <td>${fmtMoney(b.restaurant||0)}</td><td>${fmtMoney(b.parking||0)}</td>
-      <td><strong>${fmtMoney(finTotal(b))}</strong></td>
+      <td class="num">${fmtMoney(b.roomRev||0)}</td><td class="num">${fmtMoney(b.roomFees||0)}</td>
+      <td class="num">${fmtMoney(b.restaurant||0)}</td><td class="num">${fmtMoney(b.parking||0)}</td>
+      <td class="num">${fmtMoney(b.misc||0)}</td>
+      <td class="num"><strong>${fmtMoney(finTotal(b))}</strong></td>
       <td class="row-actions"><button class="btn-ghost" data-fbedit="${b.key}">Edit</button><button class="btn-ghost" data-fbdel="${b.key}">Del</button></td>`;
     body.appendChild(tr);
   });
@@ -2249,6 +2424,7 @@ function renderFinBudgetTable(){
     document.getElementById('fb-year').value=yr;document.getElementById('fb-month').value=mo;
     document.getElementById('fb-roomrev').value=b.roomRev||'';document.getElementById('fb-roomfees').value=b.roomFees||'';
     document.getElementById('fb-restaurant').value=b.restaurant||'';document.getElementById('fb-parking').value=b.parking||'';
+    document.getElementById('fb-misc').value=b.misc||'';
     document.querySelector('[data-fintab="budget"]').click();
     document.getElementById('finBudgetMsg').textContent=`Editing ${MONTHS[mo-1]} ${yr} — update and save.`;
   }));
@@ -2265,17 +2441,19 @@ function renderFinActualsTable(){
   allKeys.forEach(k=>{
     const[yr,mo]=k.split('-').map(Number);
     const merged=getMergedActual(yr,mo);
-    const hasFees=merged.roomFees||merged.restaurant||merged.parking;
+    const hasFees=merged.roomFees||merged.restaurant||merged.parking||merged.misc;
     const rrLabel=merged.roomRev!==null
-      ?`${fmtMoney(merged.roomRev)}<span style="font-size:0.65rem;color:var(--brass);margin-left:5px;">${merged.roomRevSource==='pace'?'pace':'from history'}</span>`
+      ?`${fmtMoney(merged.roomRev)}<span style="font-size:0.65rem;color:var(--accent);margin-left:5px;">${merged.roomRevSource==='pace'?'pace':'from history'}</span>`
       :`<span style="color:var(--ink-soft)">—</span>`;
+    const dash='<span style="color:var(--ink-soft)">—</span>';
     const tr=document.createElement('tr');
     tr.innerHTML=`<td>${MONTHS[mo-1]} ${yr}</td><td>${rrLabel}</td>
-      <td>${hasFees?fmtMoney(merged.roomFees):'<span style="color:var(--ink-soft)">—</span>'}</td>
-      <td>${hasFees?fmtMoney(merged.restaurant):'<span style="color:var(--ink-soft)">—</span>'}</td>
-      <td>${hasFees?fmtMoney(merged.parking):'<span style="color:var(--ink-soft)">—</span>'}</td>
-      <td><strong>${fmtMoney(finTotal(merged))}</strong></td>
-      <td class="row-actions"><button class="btn-ghost" data-faedit="${k}">Edit fees</button>${hasFees?`<button class="btn-ghost" data-fadel="${k}">Clear</button>`:''}</td>`;
+      <td class="num">${hasFees?fmtMoney(merged.roomFees):dash}</td>
+      <td class="num">${hasFees?fmtMoney(merged.restaurant):dash}</td>
+      <td class="num">${hasFees?fmtMoney(merged.parking):dash}</td>
+      <td class="num">${hasFees?fmtMoney(merged.misc||0):dash}</td>
+      <td class="num"><strong>${fmtMoney(finTotal(merged))}</strong></td>
+      <td class="row-actions"><button class="btn-ghost" data-faedit="${k}">Edit</button>${hasFees?`<button class="btn-ghost" data-fadel="${k}">Clear</button>`:''}</td>`;
     body.appendChild(tr);
   });
   body.querySelectorAll('[data-faedit]').forEach(btn=>btn.addEventListener('click',()=>{
@@ -2285,6 +2463,7 @@ function renderFinActualsTable(){
     document.getElementById('fa-roomfees').value=stored.roomFees||'';
     document.getElementById('fa-restaurant').value=stored.restaurant||'';
     document.getElementById('fa-parking').value=stored.parking||'';
+    document.getElementById('fa-misc').value=stored.misc||'';
     document.querySelector('[data-fintab="actuals"]').click();
     document.getElementById('finActualsMsg').textContent=`Editing ${MONTHS[mo-1]} ${yr} — update and save.`;
   }));
@@ -2305,37 +2484,39 @@ document.getElementById('finBudgetSaveBtn').addEventListener('click',async()=>{
   const roomFees=parseFloat(document.getElementById('fb-roomfees').value)||0;
   const restaurant=parseFloat(document.getElementById('fb-restaurant').value)||0;
   const parking=parseFloat(document.getElementById('fb-parking').value)||0;
+  const misc=parseFloat(document.getElementById('fb-misc').value)||0;
   const msg=document.getElementById('finBudgetMsg');
   if(!year||!month){msg.textContent='Please select a year and month.';return;}
-  const key=keyFor(year,month);const rec={key,year,month,roomRev,roomFees,restaurant,parking};
+  const key=keyFor(year,month);const rec={key,year,month,roomRev,roomFees,restaurant,parking,misc};
   const idx=finBudget.findIndex(b=>b.key===key);
   if(idx>=0)finBudget[idx]=rec;else finBudget.push(rec);
   finBudget.sort((a,b)=>a.year-b.year||a.month-b.month);
   await saveFinBudget();
   msg.textContent=`Budget saved for ${MONTHS[month-1]} ${year}. Total: ${fmtMoney(finTotal(rec))}.`;
-  ['fb-year','fb-month','fb-roomrev','fb-roomfees','fb-restaurant','fb-parking'].forEach(id=>{document.getElementById(id).value='';});
+  ['fb-year','fb-month','fb-roomrev','fb-roomfees','fb-restaurant','fb-parking','fb-misc'].forEach(id=>{document.getElementById(id).value='';});
   renderFinancials();
 });
 
-/* Actuals save — only stores fees/restaurant/parking; room rev pulled live */
+/* Actuals save — only stores fees/restaurant/parking/misc; room rev pulled live */
 document.getElementById('finActualsSaveBtn').addEventListener('click',async()=>{
   const year=parseInt(document.getElementById('fa-year').value,10);
   const month=parseInt(document.getElementById('fa-month').value,10);
   const roomFees=parseFloat(document.getElementById('fa-roomfees').value)||0;
   const restaurant=parseFloat(document.getElementById('fa-restaurant').value)||0;
   const parking=parseFloat(document.getElementById('fa-parking').value)||0;
+  const misc=parseFloat(document.getElementById('fa-misc').value)||0;
   const msg=document.getElementById('finActualsMsg');
   if(!year||!month){msg.textContent='Please select a year and month.';return;}
   const key=keyFor(year,month);
-  const rec={key,year,month,roomFees,restaurant,parking};
+  const rec={key,year,month,roomFees,restaurant,parking,misc};
   const idx=finActuals.findIndex(a=>a.key===key);
   if(idx>=0)finActuals[idx]=rec;else finActuals.push(rec);
   finActuals.sort((a,b)=>a.year-b.year||a.month-b.month);
   await saveFinActuals();
   const rr=getRoomRev(year,month);
   const merged={...rec,roomRev:rr.value};
-  msg.textContent=`Saved ${MONTHS[month-1]} ${year}. Other revenue: ${fmtMoney(roomFees+restaurant+parking)}. Total with room rev: ${rr.value!==null?fmtMoney(finTotal(merged)):'room revenue not yet on file'}.`;
-  ['fa-year','fa-month','fa-roomfees','fa-restaurant','fa-parking'].forEach(id=>{document.getElementById(id).value='';});
+  msg.textContent=`Saved ${MONTHS[month-1]} ${year}. Other revenue: ${fmtMoney(roomFees+restaurant+parking+misc)}. Total with room rev: ${rr.value!==null?fmtMoney(finTotal(merged)):'room revenue not yet on file'}.`;
+  ['fa-year','fa-month','fa-roomfees','fa-restaurant','fa-parking','fa-misc'].forEach(id=>{document.getElementById(id).value='';});
   renderFinancials();
 });
 /* ════════════════════════════════════════
