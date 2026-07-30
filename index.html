@@ -61,19 +61,20 @@ body{margin:0;background:var(--paper);color:var(--ink);font-family:'Inter',syste
 
 /* ── Top chrome ── */
 .app-header{
-  background:var(--ink);
+  background:#E67E22;
   padding:0 28px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;
   box-shadow:0 2px 8px rgba(0,0,0,0.15);
 }
 .app-header .brand{display:flex;align-items:center;gap:10px;padding:14px 0;}
-.app-header h1{font-family:'Inter',sans-serif;font-weight:700;font-size:1.1rem;margin:0;color:#fff;letter-spacing:-0.01em;}
-.app-header .brand-sub{font-size:0.72rem;color:rgba(255,255,255,0.45);font-weight:500;margin-top:1px;}
+.app-header h1{font-family:'Inter',sans-serif;font-weight:700;font-size:1.05rem;margin:0;color:#fff;letter-spacing:-0.01em;}
+.app-header .brand-sub{font-size:0.72rem;color:rgba(255,255,255,0.6);font-weight:500;margin-top:1px;}
+.header-date{font-size:0.72rem;color:rgba(255,255,255,0.7);font-weight:500;white-space:nowrap;border-left:1px solid rgba(255,255,255,0.25);padding-left:14px;margin-left:4px;}
 .key-badge{
   display:flex;align-items:center;gap:7px;font-size:0.72rem;font-weight:500;
-  color:rgba(255,255,255,0.55);border:1px solid rgba(255,255,255,0.15);
-  padding:5px 11px;border-radius:999px;background:rgba(255,255,255,0.06);
+  color:rgba(255,255,255,0.75);border:1px solid rgba(255,255,255,0.25);
+  padding:5px 11px;border-radius:999px;background:rgba(255,255,255,0.12);
 }
-.key-badge .dot{width:5px;height:5px;border-radius:50%;background:#27AE60;}
+.key-badge .dot{width:5px;height:5px;border-radius:50%;background:#fff;}
 
 /* ── Tab nav ── */
 .tab-nav{
@@ -283,9 +284,9 @@ canvas{max-height:240px;}
 @keyframes spin{to{transform:rotate(360deg);}}
 
 /* ── User pill ── */
-.user-pill{display:inline-flex;align-items:center;gap:8px;border:1px solid rgba(255,255,255,0.2);border-radius:999px;padding:5px 12px 5px 6px;background:rgba(255,255,255,0.08);cursor:pointer;transition:background .12s;position:relative;font-size:0.8rem;color:rgba(255,255,255,0.85);font-weight:500;white-space:nowrap;}
-.user-pill:hover{background:rgba(255,255,255,0.15);}
-.user-pill .up-avatar{width:26px;height:26px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:0.68rem;font-weight:700;color:#fff;overflow:hidden;flex-shrink:0;}
+.user-pill{display:inline-flex;align-items:center;gap:8px;border:1px solid rgba(255,255,255,0.35);border-radius:999px;padding:5px 12px 5px 6px;background:rgba(255,255,255,0.15);cursor:pointer;transition:background .12s;position:relative;font-size:0.8rem;color:#fff;font-weight:600;white-space:nowrap;}
+.user-pill:hover{background:rgba(255,255,255,0.25);}
+.user-pill .up-avatar{width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,0.25);display:flex;align-items:center;justify-content:center;font-size:0.68rem;font-weight:700;color:#fff;overflow:hidden;flex-shrink:0;}
 .user-pill .up-avatar img{width:100%;height:100%;object-fit:cover;}
 .user-menu{position:absolute;top:calc(100% + 8px);right:0;background:var(--card);border:1px solid var(--line);border-radius:var(--radius-lg);box-shadow:var(--shadow-md);min-width:200px;padding:6px;z-index:200;display:none;}
 .user-menu.open{display:block;}
@@ -296,10 +297,10 @@ canvas{max-height:240px;}
 .user-menu-item:hover{background:var(--paper);}
 .user-menu-item.danger{color:var(--bad);}
 .user-menu-item.danger:hover{background:var(--red-soft);}
-.drive-header-btn{display:inline-flex;align-items:center;gap:7px;font-family:'Inter',sans-serif;font-size:0.75rem;font-weight:600;padding:7px 13px;border-radius:6px;background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.7);border:1px solid rgba(255,255,255,0.15);cursor:pointer;transition:background .12s;}
-.drive-header-btn:hover{background:rgba(255,255,255,0.15);opacity:1;}
-.drive-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.3);}
-.drive-dot.connected{background:#27AE60;}
+.drive-header-btn{display:inline-flex;align-items:center;gap:7px;font-family:'Inter',sans-serif;font-size:0.75rem;font-weight:600;padding:7px 13px;border-radius:6px;background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.3);cursor:pointer;transition:background .12s;}
+.drive-header-btn:hover{background:rgba(255,255,255,0.25);opacity:1;}
+.drive-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.5);}
+.drive-dot.connected{background:#fff;}
 .profile-pill{display:inline-flex;align-items:center;gap:7px;font-size:0.72rem;font-weight:600;color:rgba(255,255,255,0.55);border:1px solid rgba(255,255,255,0.15);padding:5px 11px;border-radius:999px;background:rgba(255,255,255,0.06);cursor:pointer;text-decoration:none;transition:background .12s;white-space:nowrap;}
 .profile-pill:hover{background:rgba(255,255,255,0.12);color:rgba(255,255,255,0.85);}
 .profile-pill .pp-dot{width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,0.3);}
@@ -353,7 +354,10 @@ canvas{max-height:240px;}
 
 <div class="app-header">
   <div class="brand">
-    <h1 id="headerTitle">Performance Dashboard</h1>
+    <div>
+      <h1 id="headerTitle">Performance Dashboard</h1>
+    </div>
+    <div class="header-date" id="headerDate"></div>
   </div>
   <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
     <div class="key-badge"><span class="dot"></span>RevPAR = Total Revenue ÷ Available Rooms</div>
@@ -552,8 +556,8 @@ canvas{max-height:240px;}
   <!-- Forecast — projected end of month -->
   <section>
     <div class="section-head">
-      <h2>Month-End Forecast</h2>
-      <span class="sub">Projected based on current daily pace — days elapsed vs. days remaining</span>
+      <h2>Forward Pace — Current BotB vs. Last Year</h2>
+      <span class="sub">On-books revenue from current BotB import vs. same month last year actuals</span>
     </div>
     <div class="forecast-grid" id="forecastGrid"></div>
   </section>
@@ -1011,12 +1015,6 @@ canvas{max-height:240px;}
 
   <!-- Sign-in card (shown when not connected) -->
   <div class="drive-connect-card" id="driveConnectCard">
-    <div class="drive-g-logo">
-      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M8.5 3.5L3 12.5l3.5 6h11l3.5-6L16.5 3.5H8.5z" stroke="var(--accent)" stroke-width="1.5" fill="none"/>
-        <path d="M3 12.5h18M12 3.5L6.5 20M12 3.5L17.5 20" stroke="var(--accent)" stroke-width="1.5"/>
-      </svg>
-    </div>
     <div style="flex:1;">
       <h3>Connect Google Drive</h3>
       <p>Sign in to automatically sync your PMS exports. Once connected, the dashboard re-imports current-year reports on every sync and locks historical files after first import.</p>
@@ -1108,6 +1106,14 @@ canvas{max-height:240px;}
 const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
 const DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const YEAR_COLORS=['#A9793C','#2F5B6B','#7C8B99','#B4483C','#3E6259','#8A5A9E'];
+
+/* ── Live date in header ── */
+(function setHeaderDate(){
+  const el=document.getElementById('headerDate');
+  if(!el)return;
+  const now=new Date();
+  el.textContent=now.toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+})();
 
 /* ─── State ─── */
 let entries=[];       // monthly {key,year,month,revenue,adr,occ}
@@ -1365,8 +1371,10 @@ function renderAnalytics(){
 }
 
 /* ════════════════════════════════════════
-   FORECAST — projected end-of-month
-   Based on daily pace: revenue/day elapsed × days in month
+   FORWARD PACE — Current BotB vs. LY Actuals
+   Uses paceEntries (populated by Current BotB import) as the
+   on-books figure. Compares against last year's actual entries.
+   Shows next 4 months from today.
 ════════════════════════════════════════ */
 function renderForecast(){
   const grid=document.getElementById('forecastGrid');
@@ -1374,13 +1382,8 @@ function renderForecast(){
   grid.innerHTML='';
 
   const today=new Date();
-  const{current}=currentAndPriorYear();
-  if(!current||!dailyEntries.length){
-    grid.innerHTML=`<div class="forecast-card" style="grid-column:span 4"><div class="fc-month">No daily data</div><div class="fc-label" style="color:var(--ink-soft);">Import Business on the Books CSV data to see month-end forecasts.</div></div>`;
-    return;
-  }
 
-  // Build forecasts for current + next 3 months
+  // Build the next 4 months
   const months=[];
   for(let i=0;i<4;i++){
     let y=today.getFullYear(),m=today.getMonth()+1+i;
@@ -1388,33 +1391,47 @@ function renderForecast(){
     months.push({year:y,month:m});
   }
 
-  months.forEach(({year,month})=>{
-    const daysTotal=daysInMonth(year,month);
-    const daysElapsed=year===today.getFullYear()&&month===today.getMonth()+1
-      ?Math.min(today.getDate(),daysTotal) : daysTotal;
-    const dailyForMonth=dailyEntries.filter(d=>d.year===year&&d.month===month);
-    const actualRev=dailyForMonth.reduce((s,d)=>s+(d.revenue||0),0);
-    const lyEntry=entries.find(e=>e.year===year-1&&e.month===month);
-    const lyRev=lyEntry?lyEntry.revenue:null;
+  const hasAnyPace=months.some(({year,month})=>paceEntries.find(p=>p.year===year&&p.month===month));
 
-    let projected=null,pct=null,barW=0;
-    if(actualRev>0&&daysElapsed>0){
-      const dailyRate=actualRev/daysElapsed;
-      projected=dailyRate*daysTotal;
-      if(lyRev){ pct=(projected/lyRev)*100; barW=Math.min(pct,150); }
-    }
+  if(!hasAnyPace){
+    grid.innerHTML=`<div class="forecast-card" style="grid-column:span 4">
+      <div class="fc-month">No on-books data</div>
+      <div class="fc-label" style="color:var(--ink-soft);margin-top:6px;">Sync your Current BotB folder from Google Drive to populate forward pace. The current BotB data feeds this section automatically.</div>
+    </div>`;
+    return;
+  }
+
+  months.forEach(({year,month})=>{
+    // Current BotB on-books data for this month (from pace entries)
+    const pace=paceEntries.find(p=>p.year===year&&p.month===month);
+    // Last year actual for same month
+    const lyActual=entries.find(e=>e.year===year-1&&e.month===month);
+    const lyRev=lyActual?lyActual.revenue:null;
+
+    const obRev=pace?pace.revenue:null;
+    const obAdr=pace?pace.adr:null;
+    const obOcc=pace?pace.occ:null;
+    const asOf=pace?pace.asOfDate:null;
+
+    // Pace % = on-books revenue ÷ LY actual revenue
+    let pct=null;
+    if(obRev!==null&&lyRev) pct=(obRev/lyRev)*100;
 
     const isOnPace=pct!==null&&pct>=100;
     const card=document.createElement('div');
-    card.className=`forecast-card ${pct===null?'':(isOnPace?'on-pace':'below-pace')}`;
+    card.className=`forecast-card ${obRev===null?'':(isOnPace?'on-pace':'below-pace')}`;
+
+    const asOfStr=asOf?`As of ${new Date(asOf+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'})}`:null;
+
     card.innerHTML=`
       <div class="fc-month">${MONTHS[month-1]} ${year}</div>
-      <div class="fc-projected">${projected!==null?fmtMoney(projected):'—'}</div>
-      <div class="fc-label">Projected month-end${daysElapsed<daysTotal?` (${daysElapsed}/${daysTotal} days)`:' (complete)'}</div>
+      <div class="fc-projected">${obRev!==null?fmtMoney(obRev):'—'}</div>
+      <div class="fc-label">On-books revenue${asOfStr?` · ${asOfStr}`:''}</div>
       ${lyRev?`
-        <div class="fc-bar-wrap"><div class="fc-bar ${isOnPace?'over':'under'}" style="width:${Math.min(barW,100)}%"></div></div>
+        <div class="fc-bar-wrap"><div class="fc-bar ${isOnPace?'over':'under'}" style="width:${Math.min(pct||0,100)}%"></div></div>
         <div class="fc-pct ${isOnPace?'over':'under'}">${pct!==null?`${pct.toFixed(1)}% of LY ${fmtMoney(lyRev)}`:''}</div>
-      `:`<div class="fc-label" style="margin-top:8px;color:var(--ink-xsoft);">No LY data to compare</div>`}
+      `:`<div class="fc-label" style="margin-top:8px;color:var(--ink-xsoft);">No LY actuals to compare</div>`}
+      ${obAdr!==null?`<div class="fc-label" style="margin-top:6px;">ADR ${fmtMoney2(obAdr)} · Occ ${fmtPct(obOcc||0)}</div>`:''}
     `;
     grid.appendChild(card);
   });
@@ -3166,9 +3183,11 @@ async function saveProfileFromDrawer(){
     // Apply currency immediately
     if(data.currency) currencySymbol = data.currency;
 
-    // Update header title if property name changed
-    if(data.propName && document.getElementById('headerTitle')){
-      document.getElementById('headerTitle').textContent = data.propName;
+    // Update header title — "{Property Name} — Performance Dashboard"
+    if(document.getElementById('headerTitle')){
+      document.getElementById('headerTitle').textContent = data.propName
+        ? `${data.propName} — Performance Dashboard`
+        : 'Performance Dashboard';
     }
 
     // Sync Drive folder inputs if Drive tab is open and fields are blank
@@ -3310,6 +3329,16 @@ function waitForChart(cb,tries=0){
   await loadPaceEntries();
   await loadDailyEntries();
   await loadSettings();
+  // Apply property name to header title on load
+  try{
+    if(window.DB){
+      const profile=await window.DB.getProfile();
+      if(profile&&profile.name){
+        const titleEl=document.getElementById('headerTitle');
+        if(titleEl) titleEl.textContent=`${profile.name} — Performance Dashboard`;
+      }
+    }
+  }catch(e){}
   await loadFinBudget();
   await loadFinActuals();
   await loadProdWeeks();
