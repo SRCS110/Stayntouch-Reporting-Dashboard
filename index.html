@@ -29,12 +29,12 @@
   document.head.appendChild(s);
 })();
 </script>
-<!-- Supabase JS v2 — must load before auth.js -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" defer></script>
-<!-- Shared auth module -->
-<script src="auth.js" defer></script>
-<!-- Supabase data layer — replaces localStorage window.storage polyfill -->
-<script src="db.js" defer></script>
+<!-- Supabase JS v2 — synchronous load, must complete before inline script -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<!-- Shared auth module — synchronous, runs after Supabase -->
+<script src="auth.js"></script>
+<!-- Supabase data layer — synchronous, runs after auth.js -->
+<script src="db.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer onload="if(typeof onGisLoad==='function')onGisLoad()"></script>
 <script src="https://apis.google.com/js/api.js" async defer onload="if(typeof onGapiLoad==='function')onGapiLoad()"></script>
 <style>
@@ -1134,22 +1134,26 @@ footer{text-align:center;color:var(--ink-soft);font-size:0.78rem;margin-top:20px
 
 <script>
 /* ── window.storage ──────────────────────────────────────────────────────
-   In production: db.js (loaded above) replaces window.storage with a
-   Supabase-backed layer before this script runs.
-
-   Fallback (local dev without Supabase): maps to localStorage so the
-   dashboard still works offline. db.js sets window._dbReady = true
-   when it's live; if that flag is missing we fall back here.
+   db.js (loaded in <head>) sets window.storage to Supabase-backed layer.
+   We wait up to 3 seconds for it before falling back to localStorage.
 ── */
-if(!window.storage){
-  console.warn('[storage] db.js not loaded — falling back to localStorage');
-  window.storage={
-    get:async function(k){try{const v=localStorage.getItem('hd_'+k);if(v===null)throw new Error('not found');return{key:k,value:v};}catch(e){throw e;}},
-    set:async function(k,v){try{localStorage.setItem('hd_'+k,v);return{key:k,value:v};}catch(e){return null;}},
-    delete:async function(k){localStorage.removeItem('hd_'+k);return{key:k,deleted:true};},
-    list:async function(pfx){const keys=Object.keys(localStorage).filter(k=>k.startsWith('hd_'+(pfx||''))).map(k=>k.slice(3));return{keys};}
-  };
-}
+(function waitForStorage(tries){
+  if(window.storage && window._dbReady) return; // db.js loaded fine
+  if(tries > 60){
+    // db.js took too long or failed — fall back to localStorage
+    if(!window.storage){
+      console.warn('[storage] db.js not loaded — falling back to localStorage');
+      window.storage={
+        get:async function(k){try{const v=localStorage.getItem('hd_'+k);if(v===null)throw new Error('not found');return{key:k,value:v};}catch(e){throw e;}},
+        set:async function(k,v){try{localStorage.setItem('hd_'+k,v);return{key:k,value:v};}catch(e){return null;}},
+        delete:async function(k){localStorage.removeItem('hd_'+k);return{key:k,deleted:true};},
+        list:async function(pfx){const keys=Object.keys(localStorage).filter(k=>k.startsWith('hd_'+(pfx||''))).map(k=>k.slice(3));return{keys};}
+      };
+    }
+    return;
+  }
+  setTimeout(function(){ waitForStorage(tries+1); }, 50);
+})(0);
 
 const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
 const DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
