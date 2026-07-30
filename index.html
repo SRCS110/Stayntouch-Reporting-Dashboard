@@ -33,6 +33,8 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <!-- Shared auth module -->
 <script src="auth.js"></script>
+<!-- Supabase data layer — replaces localStorage window.storage polyfill -->
+<script src="db.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer onload="if(typeof onGisLoad==='function')onGisLoad()"></script>
 <script src="https://apis.google.com/js/api.js" async defer onload="if(typeof onGapiLoad==='function')onGapiLoad()"></script>
 <style>
@@ -936,8 +938,16 @@ footer{text-align:center;color:var(--ink-soft);font-size:0.78rem;margin-top:20px
 </footer>
 
 <script>
-/* ── window.storage polyfill — maps to localStorage when not in a Claude artifact ── */
+/* ── window.storage ──────────────────────────────────────────────────────
+   In production: db.js (loaded above) replaces window.storage with a
+   Supabase-backed layer before this script runs.
+
+   Fallback (local dev without Supabase): maps to localStorage so the
+   dashboard still works offline. db.js sets window._dbReady = true
+   when it's live; if that flag is missing we fall back here.
+── */
 if(!window.storage){
+  console.warn('[storage] db.js not loaded — falling back to localStorage');
   window.storage={
     get:async function(k){try{const v=localStorage.getItem('hd_'+k);if(v===null)throw new Error('not found');return{key:k,value:v};}catch(e){throw e;}},
     set:async function(k,v){try{localStorage.setItem('hd_'+k,v);return{key:k,value:v};}catch(e){return null;}},
@@ -2145,29 +2155,25 @@ let dashboardFileId = null; // ID of our JSON data file in Drive
 let pmsFolderId = null;     // ID of the PMS export folder
 let processedCsvIds = new Set(); // Drive file IDs we've already imported
 
-/* ── Load saved Drive prefs from localStorage ── */
-function loadDrivePrefs(){
+/* ── Load Drive prefs from Supabase (via window.storage) ── */
+async function loadDrivePrefs(){
   try{
-    const p = JSON.parse(localStorage.getItem('hotelDrivePrefs') || '{}');
-    if(p.folderName)        document.getElementById('driveFolderName').value        = p.folderName;
-    if(p.histFolderName)    document.getElementById('driveHistFolderName').value    = p.histFolderName;
-    if(p.prodFolderName)    document.getElementById('driveProdFolderName').value    = p.prodFolderName;
-    if(p.finRevFolderName)  document.getElementById('driveFinRevFolderName').value  = p.finRevFolderName;
-    if(p.processedIds)      processedCsvIds = new Set(p.processedIds);
-    if(p.lastSync)          document.getElementById('driveLastSync').textContent    = p.lastSync;
-  }catch(e){}
+    const r = await window.storage.get('drivePrefs');
+    const p = r && r.value ? JSON.parse(r.value) : {};
+    if(p.folderName)     document.getElementById('driveFolderName').value     = p.folderName;
+    if(p.histFolderName) document.getElementById('driveHistFolderName').value = p.histFolderName;
+    if(p.prodFolderName) document.getElementById('driveProdFolderName').value = p.prodFolderName;
+    // processedIds and lastSync remain session-only (not worth persisting to DB)
+  }catch(e){ console.warn('loadDrivePrefs failed:', e.message); }
 }
-function saveDrivePrefs(){
+async function saveDrivePrefs(){
   try{
-    localStorage.setItem('hotelDrivePrefs', JSON.stringify({
-      folderName:       document.getElementById('driveFolderName').value.trim(),
-      histFolderName:   document.getElementById('driveHistFolderName').value.trim(),
-      prodFolderName:   document.getElementById('driveProdFolderName').value.trim(),
-      finRevFolderName: document.getElementById('driveFinRevFolderName').value.trim(),
-      processedIds:     [...processedCsvIds],
-      lastSync:         document.getElementById('driveLastSync').textContent
+    await window.storage.set('drivePrefs', JSON.stringify({
+      folderName:     document.getElementById('driveFolderName').value.trim(),
+      histFolderName: document.getElementById('driveHistFolderName').value.trim(),
+      prodFolderName: document.getElementById('driveProdFolderName').value.trim()
     }));
-  }catch(e){}
+  }catch(e){ console.warn('saveDrivePrefs failed:', e.message); }
 }
 
 /* ── GAPI initialisation ── */
@@ -2277,7 +2283,7 @@ async function onSignedIn(){
   document.getElementById('driveSignOutBtn').style.display='inline-flex';
   document.getElementById('driveFolderRow').style.display='block';
   setDriveStatus('Connected to Google Drive — loading dashboard data…','connected');
-  loadDrivePrefs();
+  await loadDrivePrefs();
   await loadDashboardDataFromDrive();
   const hasFolder=['driveFolderName','driveHistFolderName','driveProdFolderName']
     .some(id=>document.getElementById(id).value.trim());
@@ -2735,9 +2741,17 @@ function waitForChart(cb,tries=0){
   populateMonthSelect('f-month');
   populateMonthSelect('p-month');
   populateMonthSelect('c-month');
-  
   populateMonthSelect('fb-month');
   populateMonthSelect('fa-month');
+
+  // Wait for Supabase DB layer to be ready before loading any data
+  await new Promise(resolve => {
+    if(window._dbReady){ resolve(); return; }
+    document.addEventListener('db:ready', resolve, { once: true });
+    // Safety timeout — fall through after 5s even if db.js stalls
+    setTimeout(resolve, 5000);
+  });
+
   await loadEntries();
   await loadPaceEntries();
   await loadDailyEntries();
