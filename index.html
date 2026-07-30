@@ -276,6 +276,24 @@ canvas{max-height:240px;}
 .sc-var.neg{color:var(--bad);}
 .sc-var.flat{color:var(--ink-soft);}
 
+/* ── STLY import card ── */
+.stly-import-card{
+  background:#FAFBFC;border:1.5px dashed var(--line);border-radius:var(--radius);
+  padding:14px 16px;margin-bottom:16px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+}
+.stly-import-card.has-data{background:var(--green-soft);border-color:var(--green);border-style:solid;}
+.stly-import-slot{display:flex;flex-direction:column;gap:4px;flex:1;min-width:200px;}
+.stly-import-slot label{font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--ink-soft);}
+.stly-import-slot .sil-status{font-size:0.75rem;font-weight:600;color:var(--ink-soft);}
+.stly-import-slot .sil-status.loaded{color:var(--good);}
+.stly-file-btn{
+  display:inline-flex;align-items:center;gap:6px;font-size:0.75rem;font-weight:600;
+  padding:7px 13px;border-radius:6px;background:var(--card);color:var(--ink);
+  border:1.5px solid var(--line);cursor:pointer;transition:background .12s;white-space:nowrap;
+}
+.stly-file-btn:hover{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);}
+.stly-divider{width:1px;height:40px;background:var(--line);}
+
 /* ── Auth loading ── */
 #authLoading{position:fixed;inset:0;z-index:9999;background:var(--ink);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;}
 #authLoading .al-logo{width:52px;height:52px;background:rgba(255,255,255,0.1);border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:4px;}
@@ -566,10 +584,45 @@ canvas{max-height:240px;}
   <section>
     <div class="section-head">
       <h2>Booking Pace — Same Time Last Year</h2>
+      <span class="sub" id="stlySub"></span>
     </div>
+
+    <!-- Import card — two file upload slots -->
+    <div class="stly-import-card" id="stlyImportCard">
+      <!-- Current year slot -->
+      <div class="stly-import-slot">
+        <label>Current Year Report</label>
+        <div class="sil-status" id="stlyCurStatus">No file loaded — upload Reservations by User report</div>
+      </div>
+      <button class="stly-file-btn" onclick="document.getElementById('stlyCurFile').click()">
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M6.5 1v8M3.5 6l3 3 3-3M1 10.5v1a1 1 0 001 1h9a1 1 0 001-1v-1" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Upload current year
+      </button>
+      <input type="file" id="stlyCurFile" accept=".csv" style="display:none;">
+
+      <div class="stly-divider"></div>
+
+      <!-- Prior year slot -->
+      <div class="stly-import-slot">
+        <label>Prior Year Report (STLY)</label>
+        <div class="sil-status" id="stlyLyStatus">No file loaded — upload prior year report</div>
+      </div>
+      <button class="stly-file-btn" onclick="document.getElementById('stlyLyFile').click()">
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M6.5 1v8M3.5 6l3 3 3-3M1 10.5v1a1 1 0 001 1h9a1 1 0 001-1v-1" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Upload prior year
+      </button>
+      <input type="file" id="stlyLyFile" accept=".csv" style="display:none;">
+
+      <div class="stly-divider"></div>
+      <button class="stly-file-btn" id="stlyClearBtn" title="Clear imported STLY data">
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 2l9 9M11 2l-9 9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+        Clear
+      </button>
+    </div>
+
+    <!-- Results panel — shown after both files loaded -->
     <div class="pace-stly" id="stlyPanel">
-      <h3 id="stlyTitle">Reservations Created: Trailing 365 Days</h3>
-      <p class="stly-sub" id="stlySub"></p>
+      <h3 id="stlyTitle">Upload both reports above to see booking pace</h3>
       <div class="stly-grid" id="stlyGrid"></div>
     </div>
   </section>
@@ -1125,6 +1178,12 @@ let prodWeeks=[];     // channel production weekly snapshots
 let charts={};
 let totalRooms=null;
 
+/* ─── STLY imported data (from Reservations by User CSV) ─── */
+let stlyData={
+  current: null,  // { roomNights, totalRevenue, arrMonth, arrYear, reportDate }
+  prior:   null   // { roomNights, totalRevenue, arrMonth, arrYear, reportDate }
+};
+
 /* ─── Storage ─── */
 async function loadEntries(){try{const r=await window.storage.get('entries',false);entries=r&&r.value?JSON.parse(r.value):[];}catch(e){entries=[];}entries.sort((a,b)=>a.year-b.year||a.month-b.month);}
 async function saveEntries(){
@@ -1383,9 +1442,10 @@ function renderForecast(){
 
   const today=new Date();
 
-  // Build the next 4 months
+  // Build the next 4 months starting from NEXT month
+  // Current month is excluded — it isn't over yet
   const months=[];
-  for(let i=0;i<4;i++){
+  for(let i=1;i<=4;i++){
     let y=today.getFullYear(),m=today.getMonth()+1+i;
     if(m>12){m-=12;y++;}
     months.push({year:y,month:m});
@@ -1438,82 +1498,200 @@ function renderForecast(){
 }
 
 /* ════════════════════════════════════════
-   STLY — Same Time Last Year Booking Pace
-   Exact logic per spec:
-   Today = July 30, 2026
-   Current window: Jul 30, 2025 → Jul 30, 2026 | Arrival: Aug 1–31, 2026
-   Prior window:   Jul 30, 2024 → Jul 30, 2025 | Arrival: Aug 1–31, 2025
-   We approximate using daily BotB data (rms field) for the arrival month
+   STLY — Booking Pace from Reservations by User CSV
+   
+   StayNTouch "Reservations by User by Date Range" report format:
+   Row 1: "",   "", Totals
+   Row 2: "",   Users, N
+   Row 3: "",   New Reservations, N
+   Row 4: "",   Cancelled Reservations, N
+   Row 5: "",   Overrides, N
+   Row 6: "",   Variance, N
+   Row 7: "",   Total Revenue, N      ← we need this
+   Row 8: "",   Room Nights, N        ← we need this
+   Row 9+: individual reservation detail rows
+
+   ADR  = Total Revenue ÷ Room Nights
+   RevPAR = Total Revenue ÷ (total_rooms × days_in_arrival_month)
 ════════════════════════════════════════ */
+
+function parseSTLYReport(text){
+  // Parse CSV rows — we only need the first 8 rows
+  const lines=text.split(/\r?\n/).slice(0,10);
+  let totalRevenue=null, roomNights=null;
+  for(const line of lines){
+    // Match: "","Total Revenue",97039.0 or "","Room Nights",510
+    const revMatch=line.match(/Total Revenue[",\s]+([0-9.]+)/i);
+    if(revMatch) totalRevenue=parseFloat(revMatch[1]);
+    const rmsMatch=line.match(/Room Nights[",\s]+([0-9.]+)/i);
+    if(rmsMatch) roomNights=parseFloat(rmsMatch[1]);
+  }
+  if(totalRevenue===null||roomNights===null){
+    throw new Error('Could not find Total Revenue or Room Nights in the report header. Make sure you\'re uploading a "Reservations by User by Date Range" export from StayNTouch.');
+  }
+  return { roomNights, totalRevenue };
+}
+
+function saveSTLYData(){
+  try{ localStorage.setItem('hd_stly', JSON.stringify(stlyData)); }catch(e){}
+}
+function loadSTLYData(){
+  try{
+    const raw=localStorage.getItem('hd_stly');
+    if(raw){ const d=JSON.parse(raw); if(d.current||d.prior) stlyData=d; }
+  }catch(e){}
+}
+
 function renderSTLY(){
-  const panel=document.getElementById('stlyPanel');
+  loadSTLYData(); // always load latest from storage
+
   const titleEl=document.getElementById('stlyTitle');
   const subEl=document.getElementById('stlySub');
   const gridEl=document.getElementById('stlyGrid');
-  if(!panel||!gridEl)return;
+  const importCard=document.getElementById('stlyImportCard');
+  if(!gridEl)return;
 
   const today=new Date();
   const pad=n=>String(n).padStart(2,'0');
 
-  // Next month is the arrival window
-  let arrYear=today.getFullYear(),arrMonth=today.getMonth()+2;
-  if(arrMonth>12){arrMonth=1;arrYear++;}
+  // Arrival window = next calendar month
+  let arrYear=today.getFullYear(), arrMonth=today.getMonth()+2;
+  if(arrMonth>12){ arrMonth=1; arrYear++; }
   const arrMonthName=MONTHS[arrMonth-1];
+  const days=daysInMonth(arrYear,arrMonth);
+  const daysLY=daysInMonth(arrYear-1,arrMonth);
 
-  // Date label strings
+  // Update status labels
+  const curStatus=document.getElementById('stlyCurStatus');
+  const lyStatus=document.getElementById('stlyLyStatus');
+  if(curStatus){
+    if(stlyData.current){
+      curStatus.textContent=`✓ Loaded — ${Math.round(stlyData.current.roomNights)} room nights, ${fmtMoney(stlyData.current.totalRevenue)}`;
+      curStatus.className='sil-status loaded';
+    } else {
+      curStatus.textContent='No file loaded — upload Reservations by User report';
+      curStatus.className='sil-status';
+    }
+  }
+  if(lyStatus){
+    if(stlyData.prior){
+      lyStatus.textContent=`✓ Loaded — ${Math.round(stlyData.prior.roomNights)} room nights, ${fmtMoney(stlyData.prior.totalRevenue)}`;
+      lyStatus.className='sil-status loaded';
+    } else {
+      lyStatus.textContent='No file loaded — upload prior year report';
+      lyStatus.className='sil-status';
+    }
+  }
+  if(importCard){
+    importCard.classList.toggle('has-data', !!(stlyData.current&&stlyData.prior));
+  }
+
+  // Date window labels
   const curFrom=`${today.getFullYear()-1}-${pad(today.getMonth()+1)}-${pad(today.getDate())}`;
   const curTo=`${today.getFullYear()}-${pad(today.getMonth()+1)}-${pad(today.getDate())}`;
   const lyFrom=`${today.getFullYear()-2}-${pad(today.getMonth()+1)}-${pad(today.getDate())}`;
   const lyTo=`${today.getFullYear()-1}-${pad(today.getMonth()+1)}-${pad(today.getDate())}`;
 
-  titleEl.textContent=`Booking Pace — ${arrMonthName} Arrivals`;
-  subEl.textContent=`Current: ${curFrom} to ${curTo} | Prior year: ${lyFrom} to ${lyTo}`;
+  if(subEl) subEl.textContent=stlyData.current||stlyData.prior
+    ?`Created ${curFrom} → ${curTo} vs ${lyFrom} → ${lyTo} | Arrivals ${arrMonthName}`
+    :'Upload the two Reservations by User reports to populate this section.';
 
-  // Get daily BotB data (rms field) for the arrival months
-  const curDays=dailyEntries.filter(d=>d.year===arrYear&&d.month===arrMonth);
-  const lyDays=dailyEntries.filter(d=>d.year===arrYear-1&&d.month===arrMonth);
-
-  // Sum rooms on books for each window
-  const curRms=curDays.reduce((s,d)=>s+(d.rms||0),0);
-  const lyRms=lyDays.reduce((s,d)=>s+(d.rms||0),0);
-
-  // Revenue from pace entries (on-books)
-  const curPace=paceEntries.find(p=>p.year===arrYear&&p.month===arrMonth);
-  const lyPace=paceEntries.find(p=>p.year===arrYear-1&&p.month===arrMonth);
-  const curRev=curPace?curPace.revenue:null;
-  const lyRev=lyPace?lyPace.revenue:null;
-
-  // LY actuals
-  const lyActual=entries.find(e=>e.year===arrYear-1&&e.month===arrMonth);
-
-  function stlyVar(cur,ly){
-    if(cur===null||cur===undefined||!ly)return null;
-    return((cur-ly)/Math.abs(ly))*100;
+  if(!stlyData.current&&!stlyData.prior){
+    if(titleEl) titleEl.textContent=`${arrMonthName} ${arrYear} Booking Pace — Upload reports above`;
+    gridEl.innerHTML='';
+    return;
   }
 
-  function stlyCell(label,curVal,lyVal,fmt,unit=''){
+  if(titleEl) titleEl.textContent=`${arrMonthName} ${arrYear} — Booking Pace vs. Same Time Last Year`;
+
+  const cur=stlyData.current;
+  const ly=stlyData.prior;
+
+  // Calculate derived metrics
+  const curADR  = cur&&cur.roomNights>0 ? cur.totalRevenue/cur.roomNights : null;
+  const lyADR   = ly&&ly.roomNights>0   ? ly.totalRevenue/ly.roomNights   : null;
+  const curRevPAR = cur&&totalRooms ? cur.totalRevenue/(totalRooms*days)   : null;
+  const lyRevPAR  = ly&&totalRooms  ? ly.totalRevenue/(totalRooms*daysLY)  : null;
+  const curOcc  = cur&&totalRooms ? (cur.roomNights/(totalRooms*days))*100   : null;
+  const lyOcc   = ly&&totalRooms  ? (ly.roomNights/(totalRooms*daysLY))*100  : null;
+
+  function stlyVar(c,l){
+    if(c===null||c===undefined||!l)return null;
+    return((c-l)/Math.abs(l))*100;
+  }
+  function stlyCell(label,curVal,lyVal,fmt){
     const v=stlyVar(curVal,lyVal);
     const cls=v===null?'flat':Math.abs(v)<0.1?'flat':(v>=0?'pos':'neg');
-    const varStr=v===null?'No LY data':`${v>=0?'+':''}${v.toFixed(1)}% vs STLY`;
+    const varStr=v===null?'—':`${v>=0?'+':''}${v.toFixed(1)}% vs STLY`;
     return `<div class="stly-cell">
       <div class="sc-label">${label}</div>
-      <div class="sc-cur">${curVal!==null&&curVal!==undefined?fmt(curVal)+unit:'—'}</div>
-      <div class="sc-ly">STLY: ${lyVal!==null&&lyVal!==undefined?fmt(lyVal)+unit:'—'}</div>
+      <div class="sc-cur">${curVal!==null&&curVal!==undefined?fmt(curVal):'—'}</div>
+      <div class="sc-ly">STLY: ${lyVal!==null&&lyVal!==undefined?fmt(lyVal):'—'}</div>
       <div class="sc-var ${cls}">${varStr}</div>
     </div>`;
   }
 
   gridEl.innerHTML=
-    stlyCell(`${arrMonthName} ${arrYear} — Rooms on Books`,curRms,lyRms,n=>Math.round(n).toLocaleString())+
-    stlyCell(`On-Books Revenue`,curRev,lyRev,fmtMoney)+
-    stlyCell(`LY ${arrMonthName} ${arrYear-1} — Actual Rev`,lyActual?lyActual.revenue:null,null,fmtMoney)+
-    stlyCell(`On-Books ADR`,curPace?curPace.adr:null,lyPace?lyPace.adr:null,fmtMoney2)+
-    stlyCell(`On-Books Occupancy`,curPace?curPace.occ:null,lyPace?lyPace.occ:null,n=>fmtPct(n))+
-    stlyCell(`RevPAR (on-books)`,
-      curPace&&totalRooms?curPace.revenue/availableRoomNights(arrYear,arrMonth):null,
-      lyPace&&totalRooms?lyPace.revenue/availableRoomNights(arrYear-1,arrMonth):null,
-      fmtMoney2);
+    stlyCell('Room Nights on Books',
+      cur?cur.roomNights:null,
+      ly?ly.roomNights:null,
+      n=>Math.round(n).toLocaleString())+
+    stlyCell('Total Revenue on Books',
+      cur?cur.totalRevenue:null,
+      ly?ly.totalRevenue:null,
+      fmtMoney)+
+    stlyCell('ADR (Revenue ÷ Rm Nights)',
+      curADR, lyADR, fmtMoney2)+
+    stlyCell(`Occupancy (${totalRooms?totalRooms+'rms × '+days+'d':'set room count'})`,
+      curOcc, lyOcc,
+      n=>n.toFixed(1)+'%')+
+    stlyCell(`RevPAR (Rev ÷ ${totalRooms||'?'}rms × ${days}d)`,
+      curRevPAR, lyRevPAR, fmtMoney2)+
+    (()=>{
+      // Pace % = current rev on books vs LY rev on books
+      const v=stlyVar(cur?cur.totalRevenue:null, ly?ly.totalRevenue:null);
+      const cls=v===null?'flat':v>=0?'pos':'neg';
+      return `<div class="stly-cell">
+        <div class="sc-label">Pace % (Rev vs STLY)</div>
+        <div class="sc-cur" style="font-size:1.4rem;${v!==null?(v>=0?'color:var(--good)':'color:var(--bad)'):''}">${v!==null?(v>=0?'+':'')+v.toFixed(1)+'%':'—'}</div>
+        <div class="sc-ly">100% = exactly on pace</div>
+        <div class="sc-var ${cls}">${v!==null?(v>=0?'Ahead of':'Behind') + ' STLY':'No STLY data'}</div>
+      </div>`;
+    })();
 }
+
+/* ── STLY file upload handlers ── */
+function handleSTLYFile(file, slot){
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=()=>{
+    try{
+      const parsed=parseSTLYReport(reader.result);
+      stlyData[slot]=parsed;
+      saveSTLYData();
+      renderSTLY();
+    }catch(e){
+      const statusId=slot==='current'?'stlyCurStatus':'stlyLyStatus';
+      const el=document.getElementById(statusId);
+      if(el){ el.textContent='Error: '+e.message; el.className='sil-status'; }
+    }
+  };
+  reader.readAsText(file);
+}
+
+document.getElementById('stlyCurFile')?.addEventListener('change',ev=>{
+  handleSTLYFile(ev.target.files[0],'current');
+  ev.target.value='';
+});
+document.getElementById('stlyLyFile')?.addEventListener('change',ev=>{
+  handleSTLYFile(ev.target.files[0],'prior');
+  ev.target.value='';
+});
+document.getElementById('stlyClearBtn')?.addEventListener('click',()=>{
+  stlyData={current:null,prior:null};
+  saveSTLYData();
+  renderSTLY();
+});
 
 /* ════════════════════════════════════════
    DASHBOARD — booking pace
@@ -3342,6 +3520,7 @@ function waitForChart(cb,tries=0){
   await loadFinBudget();
   await loadFinActuals();
   await loadProdWeeks();
+  loadSTLYData(); // restore imported STLY reports from localStorage
   if(totalRooms){
     document.getElementById('f-rooms').value=totalRooms;
     document.getElementById('roomsMsg').textContent=`Room-nights = ${totalRooms} rooms × days in month.`;
