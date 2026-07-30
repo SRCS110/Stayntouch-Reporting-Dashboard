@@ -6,6 +6,9 @@
 <title>Hotel Dashboard — Property Profile</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="auth.js"></script>
+<script src="db.js"></script>
 <style>
 /* ── Design tokens (mirrors main dashboard) ── */
 :root{
@@ -321,65 +324,17 @@ button:hover{opacity:0.82;}
 
 <script>
 /* ═══════════════════════════════════════════════════════
-   STORAGE — mirrors the main dashboard's polyfill
-   All keys under 'hd_' prefix in localStorage
-═══════════════════════════════════════════════════════ */
-const LS = {
-  get(k){ try{ const v=localStorage.getItem('hd_'+k); return v===null?null:v; }catch(e){return null;} },
-  set(k,v){ try{ localStorage.setItem('hd_'+k,v); return true; }catch(e){return false;} },
-  del(k){ try{ localStorage.removeItem('hd_'+k); return true; }catch(e){return false;} },
-  keys(prefix=''){ try{ return Object.keys(localStorage).filter(k=>k.startsWith('hd_'+prefix)).map(k=>k.slice(3)); }catch(e){return[];} },
-  size(k){ try{ const v=localStorage.getItem('hd_'+k); return v?new Blob([v]).size:0; }catch(e){return 0;} }
-};
-
-/* ═══════════════════════════════════════════════════════
-   PROFILE SYSTEM
-   Profiles stored as: hd_profiles  (array of {id, name})
-                        hd_profile_{id}  (profile data object)
-                        hd_activeProfile (current profile id)
+   Property Profile — Supabase-backed
+   All data reads/writes through window.DB (from db.js)
 ═══════════════════════════════════════════════════════ */
 
-function loadProfileList(){
-  const raw = LS.get('profiles');
-  return raw ? JSON.parse(raw) : [];
-}
-function saveProfileList(list){ LS.set('profiles', JSON.stringify(list)); }
-
-function loadProfileData(id){
-  const raw = LS.get('profile_'+id);
-  return raw ? JSON.parse(raw) : null;
-}
-function saveProfileData(id, data){ LS.set('profile_'+id, JSON.stringify(data)); }
-function deleteProfileData(id){ LS.del('profile_'+id); }
-
-function getActiveProfileId(){
-  return LS.get('activeProfile') || null;
-}
-function setActiveProfileId(id){
-  LS.set('activeProfile', id);
-}
-
-function genId(){
-  return Date.now().toString(36) + Math.random().toString(36).slice(2,6);
-}
-
-/* ── Sync a profile's settings into the main dashboard keys ── */
-function applyProfileToDashboard(data){
-  if(!data) return;
-
-  // The key the main dashboard reads: hd_settings → { rooms: N }
-  const existing = LS.get('settings');
-  const settings = existing ? JSON.parse(existing) : {};
-  if(data.totalRooms) settings.rooms = parseInt(data.totalRooms, 10);
-  LS.set('settings', JSON.stringify(settings));
-
-  // Drive folder names — written to same keys the main dashboard reads
-  if(data.driveFolderCurrent !== undefined){
-    // These are read back by the Drive tab on load via localStorage directly
-    LS.set('driveFolderCurrent', data.driveFolderCurrent);
-    LS.set('driveFolderHistorical', data.driveFolderHistorical || '');
-    LS.set('driveFolderProduction', data.driveFolderProduction || '');
-  }
+/* ════════════════════════════════════════════════════
+   Wait for DB layer then boot
+════════════════════════════════════════════════════ */
+function waitForDB(cb){
+  if(window._dbReady){ cb(); return; }
+  document.addEventListener('db:ready', cb, { once: true });
+  setTimeout(cb, 5000); // safety timeout
 }
 
 /* ═══════════════════════════════════════════════════════
@@ -477,44 +432,59 @@ function formatBytes(bytes){
   return (bytes/1024).toFixed(1)+'KB';
 }
 
-function renderStorageTable(){
+async function renderStorageTable(){
   const body = document.getElementById('storageBody');
+  body.innerHTML = '<tr><td colspan="5" style="color:var(--ink-soft);font-size:0.82rem;padding:12px 10px;">Loading…</td></tr>';
+
+  const TABLE_MAP = [
+    { label:'Property settings',   table:'properties',   singular:true  },
+    { label:'Monthly actuals',     table:'entries',      singular:false },
+    { label:'Pace snapshots',      table:'pace_entries', singular:false },
+    { label:'Daily entries',       table:'daily_entries',singular:false },
+    { label:'Financial budget',    table:'fin_budget',   singular:false },
+    { label:'Financial actuals',   table:'fin_actuals',  singular:false },
+    { label:'Production weeks',    table:'prod_weeks',   singular:false },
+  ];
+
   body.innerHTML = '';
-  DATA_KEYS.forEach(({key,label,isArray})=>{
-    const raw = LS.get(key);
-    const size = LS.size(key);
-    let count = '—', lastUpdated = '—';
-    if(raw){
-      try{
-        const parsed = JSON.parse(raw);
-        if(isArray && Array.isArray(parsed)) count = `${parsed.length} record${parsed.length===1?'':'s'}`;
-        else if(!isArray) count = 'Saved';
-      }catch(e){ count='(corrupt)'; }
-    } else {
-      count = '<span class="badge-no">Not set</span>';
-    }
+  for(const {label, table, singular} of TABLE_MAP){
+    let count = '—';
+    try{
+      if(singular){
+        count = '<span class="badge-yes">Saved</span>';
+      } else {
+        const { count: n, error } = await window.DB.client
+          .from(table)
+          .select('id', { count:'exact', head:true });
+        if(!error) count = `<span class="badge-yes">${n} record${n===1?'':'s'}</span>`;
+      }
+    }catch(e){ count='<span class="badge-no">Error</span>'; }
 
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>${label}</td>
-      <td>${raw?`<span class="badge-yes">${count}</span>`:count}</td>
-      <td>${formatBytes(size)}</td>
+      <td>${count}</td>
+      <td>Supabase</td>
       <td>—</td>
-      <td><button class="btn-ghost clear-row-btn" data-key="${key}">Clear</button></td>
+      <td>${!singular?`<button class="btn-ghost clear-row-btn" data-table="${table}">Clear</button>`:''}</td>
     `;
     body.appendChild(tr);
-  });
+  }
 
   // Wire clear buttons
-  body.querySelectorAll('[data-key]').forEach(btn=>{
-    btn.addEventListener('click',()=>{
-      const k = btn.dataset.key;
-      const label = DATA_KEYS.find(d=>d.key===k)?.label || k;
-      if(confirm(`Clear all "${label}" data? This cannot be undone.`)){
-        LS.del(k);
+  body.querySelectorAll('[data-table]').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      const t = btn.dataset.table;
+      const label = TABLE_MAP.find(d=>d.table===t)?.label || t;
+      if(!confirm(`Clear all "${label}" data from Supabase? This cannot be undone.`)) return;
+      try{
+        const { error } = await window.DB.client.from(t).delete().neq('id', '00000000-0000-0000-0000-000000000000');
+        if(error) throw error;
         renderStorageTable();
         showToast(`"${label}" cleared.`);
         document.getElementById('dataMsg').textContent = `Cleared: ${label}`;
+      }catch(e){
+        showToast('Clear failed: ' + e.message);
       }
     });
   });
@@ -544,44 +514,48 @@ function setSaveMsg(msg, type=''){
 /* ═══════════════════════════════════════════════════════
    EXPORT / IMPORT
 ═══════════════════════════════════════════════════════ */
-document.getElementById('exportBtn').addEventListener('click',()=>{
-  const backup = {};
-  DATA_KEYS.forEach(({key})=>{ const v=LS.get(key); if(v) backup[key]=JSON.parse(v); });
-  // Include active profile
-  const activeId = getActiveProfileId();
-  if(activeId){
-    backup['_profile'] = loadProfileData(activeId);
-    backup['_profileId'] = activeId;
-  }
-  backup['_exportedAt'] = new Date().toISOString();
-  const blob = new Blob([JSON.stringify(backup, null, 2)], {type:'application/json'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href=url;
-  const d = new Date(); const pad = n=>String(n).padStart(2,'0');
-  a.download = `hotel-dashboard-backup-${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}.json`;
-  a.click(); URL.revokeObjectURL(url);
-  showToast('Data exported successfully.');
+document.getElementById('exportBtn').addEventListener('click', async ()=>{
+  try{
+    const profile = await window.DB.getProfile();
+    const tables  = ['entries','pace_entries','daily_entries','fin_budget','fin_actuals','prod_weeks'];
+    const backup  = { _profile: profile, _exportedAt: new Date().toISOString() };
+    for(const t of tables){
+      const { data } = await window.DB.client.from(t).select('*');
+      backup[t] = data || [];
+    }
+    const blob = new Blob([JSON.stringify(backup, null, 2)], {type:'application/json'});
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a'); a.href=url;
+    const d    = new Date(); const pad = n=>String(n).padStart(2,'0');
+    a.download = `hotel-dashboard-backup-${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}.json`;
+    a.click(); URL.revokeObjectURL(url);
+    showToast('Data exported successfully.');
+  }catch(e){ showToast('Export failed: '+e.message); }
 });
 
 document.getElementById('importBtn').addEventListener('click',()=>{
   document.getElementById('importFile').click();
 });
-document.getElementById('importFile').addEventListener('change', ev=>{
+document.getElementById('importFile').addEventListener('change', async ev=>{
   const file = ev.target.files[0]; if(!file) return;
+  const msg  = document.getElementById('dataMsg');
   const reader = new FileReader();
-  const msg = document.getElementById('dataMsg');
-  reader.onload = ()=>{
+  reader.onload = async ()=>{
     try{
       const backup = JSON.parse(reader.result);
-      let count=0;
-      DATA_KEYS.forEach(({key})=>{
-        if(backup[key]!==undefined){ LS.set(key, JSON.stringify(backup[key])); count++; }
-      });
+      let count = 0;
+      const TABLE_KEYS = ['entries','pace_entries','daily_entries','fin_budget','fin_actuals','prod_weeks'];
+      for(const t of TABLE_KEYS){
+        if(backup[t]?.length){
+          const { error } = await window.DB.client.from(t).upsert(backup[t], {onConflict:'property_id,key'});
+          if(!error) count++;
+        }
+      }
       renderStorageTable();
-      msg.textContent = `✓ Restored ${count} data types from backup (exported ${backup._exportedAt||'unknown date'}).`;
-      showToast('Backup restored successfully.');
+      msg.textContent = `✓ Restored ${count} tables from backup (exported ${backup._exportedAt||'unknown date'}).`;
+      showToast('Backup restored to Supabase.');
     }catch(e){
-      msg.textContent = 'Error reading backup file: '+e.message;
+      msg.textContent = 'Error restoring backup: '+e.message;
     }
     ev.target.value='';
   };
@@ -735,6 +709,91 @@ document.getElementById('resetBtn').addEventListener('click',()=>{
   setSaveMsg('Changes discarded.');
   showToast('Changes discarded.');
 });
+
+/* ════════════════════════════════════════════════════
+   MAIN INIT — loads profile from Supabase
+════════════════════════════════════════════════════ */
+async function init(){
+  setSaveMsg('Loading profile…');
+  try{
+    // Auth guard — redirect to login if no session
+    const session = await Auth.getSession();
+    if(!session){ location.href = 'login.html'; return; }
+
+    await new Promise(resolve => waitForDB(resolve));
+
+    const profile = await window.DB.getProfile();
+    if(profile){
+      writeForm(fromDBProfile(profile));
+      renderSummary(fromDBProfile(profile));
+    } else {
+      clearForm();
+      renderSummary(null);
+    }
+
+    // Hide multi-profile UI — Supabase gives one property per user (Phase 4 will add multi-property)
+    document.getElementById('profileSelect')?.closest('.section-card')?.querySelector('.profile-bar')
+      ?.querySelectorAll('#newProfileBtn,#deleteProfileBtn').forEach(el => el.style.display='none');
+
+    setSaveMsg('Profile loaded. Make changes and save.');
+    renderStorageTable();
+  } catch(e){
+    setSaveMsg('Could not load profile: ' + e.message, 'err');
+    console.error('init failed:', e);
+  }
+}
+
+/* ── Convert DB snake_case → form camelCase ── */
+function fromDBProfile(p){
+  return {
+    propName:              p.name                     || '',
+    propBrand:             p.brand                    || '',
+    propCity:              p.city                     || '',
+    propState:             p.state                    || '',
+    propNotes:             p.notes                    || '',
+    totalRooms:            p.total_rooms != null ? String(p.total_rooms) : '',
+    roomTypes:             p.room_types               || '',
+    currency:              p.currency                 || '$',
+    fiscalYearStart:       p.fiscal_year_start != null ? String(p.fiscal_year_start) : '1',
+    revenueSources:        p.revenue_sources          || '',
+    compSet:               p.comp_set                 || '',
+    driveFolderCurrent:    p.drive_folder_current     || '',
+    driveFolderHistorical: p.drive_folder_historical  || '',
+    driveFolderProduction: p.drive_folder_production  || ''
+  };
+}
+
+/* ── Save ── */
+document.getElementById('saveBtn').addEventListener('click', async () => {
+  setSaveMsg('Saving…');
+  try{
+    const data = readForm();
+    await window.DB.saveProfile(data);
+    renderSummary(data);
+    renderStorageTable();
+    setSaveMsg('✓ Profile saved.', 'ok');
+    showToast('Profile saved.');
+  } catch(e){
+    setSaveMsg('Save failed: ' + e.message, 'err');
+    showToast('Save failed.');
+    console.error('save failed:', e);
+  }
+});
+
+/* ── Discard ── */
+document.getElementById('resetBtn').addEventListener('click', async () => {
+  try{
+    const profile = await window.DB.getProfile();
+    if(profile) writeForm(fromDBProfile(profile));
+    setSaveMsg('Changes discarded.');
+    showToast('Changes discarded.');
+  }catch(e){ showToast('Could not reload profile.'); }
+});
+
+/* ── Profile select (single property — hide switcher) ── */
+document.getElementById('profileSelect').innerHTML = '<option>My Property</option>';
+document.getElementById('newProfileBtn').style.display = 'none';
+document.getElementById('deleteProfileBtn').style.display = 'none';
 
 /* ── Boot ── */
 init();
