@@ -294,6 +294,24 @@ canvas{max-height:240px;}
 .stly-file-btn:hover{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);}
 .stly-divider{width:1px;height:40px;background:var(--line);}
 
+/* ── STLY upload log ── */
+.stly-log{margin-top:12px;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;background:var(--card);}
+.stly-log-header{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;background:#FAFBFC;border-bottom:1px solid var(--line);}
+.stly-log-header span{font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--ink-soft);}
+.stly-log-header button{font-size:0.65rem;padding:3px 8px;background:none;border:1px solid var(--line);color:var(--ink-soft);border-radius:4px;}
+.stly-log-header button:hover{border-color:var(--bad);color:var(--bad);background:var(--red-soft);}
+.stly-log-empty{padding:10px 14px;font-size:0.75rem;color:var(--ink-soft);}
+.stly-log-row{display:grid;grid-template-columns:90px 1fr 90px 90px 90px 90px 60px;gap:0;border-bottom:1px solid var(--line);font-size:0.72rem;}
+.stly-log-row:last-child{border-bottom:none;}
+.stly-log-row.hdr{background:#FAFBFC;font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:var(--ink-soft);}
+.stly-log-row > div{padding:7px 10px;border-right:1px solid var(--line);}
+.stly-log-row > div:last-child{border-right:none;text-align:center;}
+.stly-log-tag{display:inline-flex;padding:1px 6px;border-radius:3px;font-size:0.6rem;font-weight:700;text-transform:uppercase;}
+.stly-log-tag.cy{background:var(--accent-soft);color:var(--accent);}
+.stly-log-tag.py{background:var(--green-soft);color:var(--good);}
+.stly-log-del{background:none;border:none;color:var(--ink-xsoft);cursor:pointer;font-size:0.8rem;padding:0;}
+.stly-log-del:hover{color:var(--bad);}
+
 /* ── Auth loading ── */
 #authLoading{position:fixed;inset:0;z-index:9999;background:var(--ink);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;}
 #authLoading .al-logo{width:52px;height:52px;background:rgba(255,255,255,0.1);border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:4px;}
@@ -624,6 +642,15 @@ canvas{max-height:240px;}
     <div class="pace-stly" id="stlyPanel">
       <h3 id="stlyTitle">Upload both reports above to see booking pace</h3>
       <div class="stly-grid" id="stlyGrid"></div>
+    </div>
+
+    <!-- Upload history log -->
+    <div class="stly-log" id="stlyLog">
+      <div class="stly-log-header">
+        <span>Upload history</span>
+        <button id="stlyLogClearAllBtn" title="Clear all upload history">Clear all history</button>
+      </div>
+      <div id="stlyLogBody"></div>
     </div>
   </section>
 
@@ -1433,7 +1460,7 @@ function renderAnalytics(){
    FORWARD PACE — Current BotB vs. LY Actuals
    Uses paceEntries (populated by Current BotB import) as the
    on-books figure. Compares against last year's actual entries.
-   Shows next 4 months from today.
+   Shows current month (in-progress) + next 3 future months.
 ════════════════════════════════════════ */
 function renderForecast(){
   const grid=document.getElementById('forecastGrid');
@@ -1441,12 +1468,13 @@ function renderForecast(){
   grid.innerHTML='';
 
   const today=new Date();
+  const curMonth=today.getMonth()+1;
+  const curYear=today.getFullYear();
 
-  // Build the next 4 months starting from NEXT month
-  // Current month is excluded — it isn't over yet
+  // Current month first, then next 3 — 4 cards total
   const months=[];
-  for(let i=1;i<=4;i++){
-    let y=today.getFullYear(),m=today.getMonth()+1+i;
+  for(let i=0;i<4;i++){
+    let y=curYear, m=curMonth+i;
     if(m>12){m-=12;y++;}
     months.push({year:y,month:m});
   }
@@ -1462,9 +1490,8 @@ function renderForecast(){
   }
 
   months.forEach(({year,month})=>{
-    // Current BotB on-books data for this month (from pace entries)
+    const isCurrentMonth=year===curYear&&month===curMonth;
     const pace=paceEntries.find(p=>p.year===year&&p.month===month);
-    // Last year actual for same month
     const lyActual=entries.find(e=>e.year===year-1&&e.month===month);
     const lyRev=lyActual?lyActual.revenue:null;
 
@@ -1472,24 +1499,26 @@ function renderForecast(){
     const obAdr=pace?pace.adr:null;
     const obOcc=pace?pace.occ:null;
     const asOf=pace?pace.asOfDate:null;
-
-    // Pace % = on-books revenue ÷ LY actual revenue
-    let pct=null;
-    if(obRev!==null&&lyRev) pct=(obRev/lyRev)*100;
-
-    const isOnPace=pct!==null&&pct>=100;
-    const card=document.createElement('div');
-    card.className=`forecast-card ${obRev===null?'':(isOnPace?'on-pace':'below-pace')}`;
-
     const asOfStr=asOf?`As of ${new Date(asOf+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'})}`:null;
 
+    // Current month: show on-books vs LY actual but label clearly as in-progress
+    // Future months: show pace % comparison
+    let pct=null;
+    if(obRev!==null&&lyRev) pct=(obRev/lyRev)*100;
+    const isOnPace=pct!==null&&pct>=100;
+
+    const card=document.createElement('div');
+    // Current month gets a neutral border — it's not "behind", it's just not done
+    card.className=`forecast-card ${isCurrentMonth?'':(obRev===null?'':(isOnPace?'on-pace':'below-pace'))}`;
+    if(isCurrentMonth) card.style.borderColor='var(--accent)';
+
     card.innerHTML=`
-      <div class="fc-month">${MONTHS[month-1]} ${year}</div>
+      <div class="fc-month">${MONTHS[month-1]} ${year}${isCurrentMonth?` <span style="font-size:0.55rem;background:var(--accent-soft);color:var(--accent);padding:1px 5px;border-radius:3px;font-weight:700;letter-spacing:0.04em;">IN PROGRESS</span>`:''}</div>
       <div class="fc-projected">${obRev!==null?fmtMoney(obRev):'—'}</div>
       <div class="fc-label">On-books revenue${asOfStr?` · ${asOfStr}`:''}</div>
       ${lyRev?`
-        <div class="fc-bar-wrap"><div class="fc-bar ${isOnPace?'over':'under'}" style="width:${Math.min(pct||0,100)}%"></div></div>
-        <div class="fc-pct ${isOnPace?'over':'under'}">${pct!==null?`${pct.toFixed(1)}% of LY ${fmtMoney(lyRev)}`:''}</div>
+        <div class="fc-bar-wrap"><div class="fc-bar ${isCurrentMonth?'neutral':(isOnPace?'over':'under')}" style="width:${Math.min(pct||0,100)}%;background:${isCurrentMonth?'var(--accent)':''};"></div></div>
+        <div class="fc-pct ${isCurrentMonth?'neutral':(isOnPace?'over':'under')}">${pct!==null?`${pct.toFixed(1)}% of LY ${fmtMoney(lyRev)}`:''}</div>
       `:`<div class="fc-label" style="margin-top:8px;color:var(--ink-xsoft);">No LY actuals to compare</div>`}
       ${obAdr!==null?`<div class="fc-label" style="margin-top:6px;">ADR ${fmtMoney2(obAdr)} · Occ ${fmtPct(obOcc||0)}</div>`:''}
     `;
@@ -1532,14 +1561,132 @@ function parseSTLYReport(text){
   return { roomNights, totalRevenue };
 }
 
-function saveSTLYData(){
+/* ── STLY upload log state ── */
+let stlyLog=[];  // array of { id, slot, filename, uploadedAt, arrivalMonth, arrivalYear, roomNights, totalRevenue }
+
+/* ── STLY persistence — Supabase with localStorage fallback ──
+   window.DB methods:
+     DB.saveSTLYCurrent(stlyData)  — saves the two active loaded files
+     DB.getSTLYCurrent()           — restores them on page load
+     DB.saveSTLYUpload(entry)      — appends one row to upload history
+     DB.getSTLYUploads()           — returns full history array
+     DB.deleteSTLYUpload(id)       — removes one history row
+     DB.clearSTLYUploads()         — wipes all history for this property
+   Falls back to localStorage if DB not ready.
+── */
+
+async function saveSTLYData(){
   try{ localStorage.setItem('hd_stly', JSON.stringify(stlyData)); }catch(e){}
-}
-function loadSTLYData(){
   try{
-    const raw=localStorage.getItem('hd_stly');
-    if(raw){ const d=JSON.parse(raw); if(d.current||d.prior) stlyData=d; }
-  }catch(e){}
+    if(window.DB && window._dbReady) await window.DB.saveSTLYCurrent(stlyData);
+  }catch(e){ console.warn('[STLY] Supabase saveSTLYCurrent failed:', e.message); }
+}
+
+async function loadSTLYData(){
+  try{
+    if(window.DB && window._dbReady){
+      const remote = await window.DB.getSTLYCurrent();
+      if(remote && (remote.current || remote.prior)){
+        stlyData = remote;
+        try{ localStorage.setItem('hd_stly', JSON.stringify(stlyData)); }catch(e){}
+        return;
+      }
+    }
+  }catch(e){ console.warn('[STLY] Supabase getSTLYCurrent failed, using localStorage:', e.message); }
+  try{
+    const raw = localStorage.getItem('hd_stly');
+    if(raw){ const d = JSON.parse(raw); if(d.current || d.prior) stlyData = d; }
+  }catch(e){ stlyData = { current: null, prior: null }; }
+}
+
+async function saveSTLYLog(){
+  try{ localStorage.setItem('hd_stly_log', JSON.stringify(stlyLog)); }catch(e){}
+}
+
+async function loadSTLYLog(){
+  try{
+    if(window.DB && window._dbReady){
+      const remote = await window.DB.getSTLYUploads();
+      if(remote && remote.length){
+        stlyLog = remote;
+        try{ localStorage.setItem('hd_stly_log', JSON.stringify(stlyLog)); }catch(e){}
+        return;
+      }
+    }
+  }catch(e){ console.warn('[STLY] Supabase getSTLYUploads failed, using localStorage:', e.message); }
+  try{
+    const raw = localStorage.getItem('hd_stly_log');
+    if(raw) stlyLog = JSON.parse(raw) || [];
+  }catch(e){ stlyLog = []; }
+}
+
+async function addSTLYLogEntry(slot, filename, data, arrivalMonth, arrivalYear){
+  const entry = {
+    id:           Date.now().toString(36) + Math.random().toString(36).slice(2,5),
+    slot,
+    filename,
+    uploadedAt:   new Date().toISOString(),
+    arrivalMonth,
+    arrivalYear,
+    roomNights:   data.roomNights,
+    totalRevenue: data.totalRevenue
+  };
+  stlyLog.unshift(entry);
+  if(stlyLog.length > 100) stlyLog = stlyLog.slice(0, 100);
+  try{ localStorage.setItem('hd_stly_log', JSON.stringify(stlyLog)); }catch(e){}
+  try{
+    if(window.DB && window._dbReady) await window.DB.saveSTLYUpload(entry);
+  }catch(e){ console.warn('[STLY] Supabase saveSTLYUpload failed:', e.message); }
+}
+
+function renderSTLYLog(){
+  const body=document.getElementById('stlyLogBody');
+  if(!body)return;
+  body.innerHTML='';
+
+  if(!stlyLog.length){
+    body.innerHTML=`<div class="stly-log-empty">No uploads yet — history will appear here after you upload reports.</div>`;
+    return;
+  }
+
+  // Header row
+  const hdr=document.createElement('div');
+  hdr.className='stly-log-row hdr';
+  hdr.innerHTML=`<div>Date</div><div>File</div><div>Type</div><div>Arrival</div><div>Rm Nights</div><div>Revenue</div><div></div>`;
+  body.appendChild(hdr);
+
+  stlyLog.forEach(entry=>{
+    const uploaded=new Date(entry.uploadedAt);
+    const dateStr=uploaded.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+    const timeStr=uploaded.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+    const adr=entry.roomNights>0?fmtMoney2(entry.totalRevenue/entry.roomNights):'—';
+    const row=document.createElement('div');
+    row.className='stly-log-row';
+    row.innerHTML=`
+      <div title="${dateStr} ${timeStr}">${dateStr}</div>
+      <div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${entry.filename||''}">${entry.filename||'—'}</div>
+      <div><span class="stly-log-tag ${entry.slot==='current'?'cy':'py'}">${entry.slot==='current'?'Current Yr':'Prior Yr'}</span></div>
+      <div>${entry.arrivalMonth?MONTHS[entry.arrivalMonth-1]+' '+(entry.arrivalYear||''):'—'}</div>
+      <div class="num">${Math.round(entry.roomNights).toLocaleString()}</div>
+      <div class="num">${fmtMoney(entry.totalRevenue)} <span style="font-size:0.65rem;color:var(--ink-soft);">ADR ${adr}</span></div>
+      <div><button class="stly-log-del" data-logid="${entry.id}" title="Remove this entry">✕</button></div>
+    `;
+    body.appendChild(row);
+  });
+
+  // Wire delete buttons
+  body.querySelectorAll('[data-logid]').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      const id = btn.dataset.logid;
+      stlyLog = stlyLog.filter(e => e.id !== id);
+      await saveSTLYLog();
+      // Also delete from Supabase (best-effort)
+      try{
+        if(window.DB && window._dbReady) await window.DB.deleteSTLYUpload(id);
+      }catch(e){ console.warn('[STLY] Supabase deleteSTLYUpload failed:', e.message); }
+      renderSTLYLog();
+    });
+  });
 }
 
 function renderSTLY(){
@@ -1669,6 +1816,15 @@ function handleSTLYFile(file, slot){
       const parsed=parseSTLYReport(reader.result);
       stlyData[slot]=parsed;
       saveSTLYData();
+
+      // Determine arrival month from the data context
+      const today=new Date();
+      let arrYear=today.getFullYear(), arrMonth=today.getMonth()+2;
+      if(arrMonth>12){ arrMonth=1; arrYear++; }
+
+      // Log the upload
+      addSTLYLogEntry(slot, file.name, parsed, arrMonth, arrYear);
+      renderSTLYLog();
       renderSTLY();
     }catch(e){
       const statusId=slot==='current'?'stlyCurStatus':'stlyLyStatus';
@@ -1687,10 +1843,21 @@ document.getElementById('stlyLyFile')?.addEventListener('change',ev=>{
   handleSTLYFile(ev.target.files[0],'prior');
   ev.target.value='';
 });
-document.getElementById('stlyClearBtn')?.addEventListener('click',()=>{
+document.getElementById('stlyClearBtn')?.addEventListener('click', async ()=>{
   stlyData={current:null,prior:null};
-  saveSTLYData();
+  await saveSTLYData();
   renderSTLY();
+});
+document.getElementById('stlyLogClearAllBtn')?.addEventListener('click', async ()=>{
+  if(confirm('Clear all STLY upload history? This does not remove the current loaded data — just the log.')){
+    stlyLog=[];
+    await saveSTLYLog();
+    // Also clear from Supabase (best-effort)
+    try{
+      if(window.DB && window._dbReady) await window.DB.clearSTLYUploads();
+    }catch(e){ console.warn('[STLY] Supabase clearSTLYUploads failed:', e.message); }
+    renderSTLYLog();
+  }
 });
 
 /* ════════════════════════════════════════
@@ -3520,7 +3687,8 @@ function waitForChart(cb,tries=0){
   await loadFinBudget();
   await loadFinActuals();
   await loadProdWeeks();
-  loadSTLYData(); // restore imported STLY reports from localStorage
+  loadSTLYData(); // restore imported STLY reports — async, runs in background
+  loadSTLYLog().then(()=>renderSTLYLog()); // restore + render upload history
   if(totalRooms){
     document.getElementById('f-rooms').value=totalRooms;
     document.getElementById('roomsMsg').textContent=`Room-nights = ${totalRooms} rooms × days in month.`;

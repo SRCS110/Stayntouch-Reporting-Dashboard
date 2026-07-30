@@ -454,6 +454,113 @@
         await deleteRow(table, key);
       },
 
+      /* ── STLY Upload Log ──────────────────────────────────────
+         Stores every "Reservations by User by Date Range" upload.
+         Table: stly_uploads
+         Columns: id, property_id, slot, filename, uploaded_at,
+                  arrival_month, arrival_year, room_nights,
+                  total_revenue, report_date
+      ── */
+
+      /* Save a new STLY upload record */
+      async saveSTLYUpload(entry) {
+        const pid = await getPropertyId();
+        const { error } = await sb.from('stly_uploads').insert({
+          property_id:    pid,
+          slot:           entry.slot,           // 'current' | 'prior'
+          filename:       entry.filename || null,
+          uploaded_at:    entry.uploadedAt || new Date().toISOString(),
+          arrival_month:  entry.arrivalMonth || null,
+          arrival_year:   entry.arrivalYear  || null,
+          room_nights:    entry.roomNights,
+          total_revenue:  entry.totalRevenue,
+          report_date:    entry.reportDate   || null
+        });
+        if (error) throw new Error('saveSTLYUpload failed: ' + error.message);
+      },
+
+      /* Get all STLY upload history for this property, newest first */
+      async getSTLYUploads() {
+        const pid = await getPropertyId();
+        const { data, error } = await sb
+          .from('stly_uploads')
+          .select('*')
+          .eq('property_id', pid)
+          .order('uploaded_at', { ascending: false })
+          .limit(100);
+        if (error) throw new Error('getSTLYUploads failed: ' + error.message);
+        return (data || []).map(r => ({
+          id:            r.id,
+          slot:          r.slot,
+          filename:      r.filename,
+          uploadedAt:    r.uploaded_at,
+          arrivalMonth:  r.arrival_month,
+          arrivalYear:   r.arrival_year,
+          roomNights:    r.room_nights,
+          totalRevenue:  r.total_revenue,
+          reportDate:    r.report_date
+        }));
+      },
+
+      /* Delete a single STLY upload record by its UUID */
+      async deleteSTLYUpload(id) {
+        const { error } = await sb
+          .from('stly_uploads')
+          .delete()
+          .eq('id', id);
+        if (error) throw new Error('deleteSTLYUpload failed: ' + error.message);
+      },
+
+      /* Delete all STLY upload history for this property */
+      async clearSTLYUploads() {
+        const pid = await getPropertyId();
+        const { error } = await sb
+          .from('stly_uploads')
+          .delete()
+          .eq('property_id', pid);
+        if (error) throw new Error('clearSTLYUploads failed: ' + error.message);
+      },
+
+      /* Save the current active STLY data (the two loaded files) ─
+         Stored as a single row per property in stly_current.
+         Upserts on property_id so there's always exactly one row. */
+      async saveSTLYCurrent(stlyData) {
+        const pid = await getPropertyId();
+        const { error } = await sb
+          .from('stly_current')
+          .upsert({
+            property_id:          pid,
+            current_room_nights:  stlyData.current?.roomNights  ?? null,
+            current_total_revenue:stlyData.current?.totalRevenue?? null,
+            prior_room_nights:    stlyData.prior?.roomNights    ?? null,
+            prior_total_revenue:  stlyData.prior?.totalRevenue  ?? null,
+            updated_at:           new Date().toISOString()
+          }, { onConflict: 'property_id' });
+        if (error) throw new Error('saveSTLYCurrent failed: ' + error.message);
+      },
+
+      /* Get the current active STLY data */
+      async getSTLYCurrent() {
+        const pid = await getPropertyId();
+        const { data, error } = await sb
+          .from('stly_current')
+          .select('*')
+          .eq('property_id', pid)
+          .maybeSingle();
+        if (error) throw new Error('getSTLYCurrent failed: ' + error.message);
+        if (!data) return { current: null, prior: null };
+        return {
+          current: data.current_room_nights != null ? {
+            roomNights:   data.current_room_nights,
+            totalRevenue: data.current_total_revenue
+          } : null,
+          prior: data.prior_room_nights != null ? {
+            roomNights:   data.prior_room_nights,
+            totalRevenue: data.prior_total_revenue
+          } : null
+        };
+      },
+
       /* Raw Supabase client — for advanced queries */
       client: sb
     };
