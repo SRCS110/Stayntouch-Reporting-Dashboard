@@ -29,6 +29,10 @@
   document.head.appendChild(s);
 })();
 </script>
+<!-- Supabase JS v2 — must load before auth.js -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<!-- Shared auth module -->
+<script src="auth.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer onload="if(typeof onGisLoad==='function')onGisLoad()"></script>
 <script src="https://apis.google.com/js/api.js" async defer onload="if(typeof onGapiLoad==='function')onGapiLoad()"></script>
 <style>
@@ -52,30 +56,6 @@ body{margin:0;background:var(--paper);color:var(--ink);font-family:'Inter',syste
   color:var(--brass);border:1px solid var(--brass-soft);padding:6px 12px;border-radius:999px;background:#FFFBF3;
 }
 .key-badge .dot{width:6px;height:6px;border-radius:50%;background:var(--brass);}
-
-/* ── Profile pill ── */
-.profile-pill{
-  display:inline-flex;align-items:center;gap:8px;font-family:'IBM Plex Mono',monospace;font-size:0.72rem;
-  color:var(--ink-soft);border:1px solid var(--line);padding:6px 12px;border-radius:999px;
-  background:var(--card);cursor:pointer;text-decoration:none;transition:background .12s,border-color .12s;
-  white-space:nowrap;
-}
-.profile-pill:hover{background:#F1ECDF;border-color:var(--brass-soft);color:var(--ink);}
-.profile-pill .pp-dot{width:6px;height:6px;border-radius:50%;background:var(--ink-soft);}
-.profile-pill.has-profile{color:var(--ink);}
-.profile-pill.has-profile .pp-dot{background:var(--good);}
-/* Setup prompt banner */
-.profile-setup-banner{
-  background:#FFFBF3;border-bottom:1px solid var(--brass-soft);
-  padding:9px 32px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
-}
-.profile-setup-banner span{font-size:0.82rem;color:var(--ink-soft);}
-.profile-setup-banner a{
-  font-size:0.8rem;font-weight:600;color:var(--brass);text-decoration:none;
-  border:1px solid var(--brass-soft);padding:4px 12px;border-radius:6px;background:#FFFBF3;
-  transition:background .12s;white-space:nowrap;
-}
-.profile-setup-banner a:hover{background:#F5EDD8;}
 
 /* ── Tab nav ── */
 .tab-nav{
@@ -216,44 +196,58 @@ canvas{max-height:240px;}
 .fin-section-tab{font-size:0.8rem;font-weight:600;padding:6px 14px;border-radius:999px;cursor:pointer;border:1px solid var(--line);background:transparent;color:var(--ink-soft);}
 .fin-section-tab.active{background:var(--ink);color:#fff;border-color:var(--ink);}
 
-/* ── Password gate ── */
-#gate{
-  position:fixed;inset:0;z-index:9999;
-  background:var(--ink);
+/* ── Auth loading screen (shown while session is checked) ── */
+#authLoading{
+  position:fixed;inset:0;z-index:9999;background:var(--ink);
+  display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;
+}
+#authLoading .al-logo{
+  width:52px;height:52px;background:var(--card);border-radius:12px;
+  display:flex;align-items:center;justify-content:center;margin-bottom:4px;
+}
+#authLoading .al-spinner{
+  width:22px;height:22px;border:2px solid rgba(255,255,255,0.15);
+  border-top-color:var(--brass);border-radius:50%;animation:spin .7s linear infinite;
+}
+#authLoading .al-text{font-size:0.8rem;color:rgba(255,255,255,0.4);font-family:'IBM Plex Mono',monospace;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* ── User pill (top-right header) ── */
+.user-pill{
+  display:inline-flex;align-items:center;gap:8px;
+  border:1px solid var(--line);border-radius:999px;
+  padding:5px 12px 5px 6px;background:var(--card);cursor:pointer;
+  transition:background .12s,border-color .12s;position:relative;
+  font-size:0.82rem;color:var(--ink);font-weight:500;
+  white-space:nowrap;
+}
+.user-pill:hover{background:#F1ECDF;border-color:var(--brass-soft);}
+.user-pill .up-avatar{
+  width:26px;height:26px;border-radius:50%;background:var(--brass-soft);
   display:flex;align-items:center;justify-content:center;
-  padding:24px;
+  font-size:0.7rem;font-weight:700;color:var(--brass);overflow:hidden;flex-shrink:0;
 }
-.gate-box{
-  background:var(--card);border-radius:14px;
-  padding:44px 40px 36px;width:100%;max-width:380px;
-  box-shadow:0 24px 64px rgba(0,0,0,0.35);text-align:center;
+.user-pill .up-avatar img{width:100%;height:100%;object-fit:cover;}
+/* Dropdown menu */
+.user-menu{
+  position:absolute;top:calc(100% + 8px);right:0;
+  background:var(--card);border:1px solid var(--line);border-radius:10px;
+  box-shadow:0 8px 28px rgba(0,0,0,0.12);min-width:200px;
+  padding:6px;z-index:200;display:none;
 }
-.gate-box h1{
-  font-family:'Fraunces',serif;font-size:1.7rem;font-weight:600;
-  margin:0 0 6px;letter-spacing:-0.01em;
+.user-menu.open{display:block;}
+.user-menu-header{padding:10px 12px 8px;border-bottom:1px solid var(--line);margin-bottom:4px;}
+.user-menu-header .um-name{font-weight:600;font-size:0.88rem;}
+.user-menu-header .um-email{font-size:0.76rem;color:var(--ink-soft);margin-top:2px;word-break:break-all;}
+.user-menu-item{
+  display:flex;align-items:center;gap:9px;width:100%;padding:9px 12px;
+  background:none;border:none;border-radius:6px;font-size:0.84rem;
+  font-family:'Inter',sans-serif;color:var(--ink);cursor:pointer;text-align:left;
+  transition:background .1s;
 }
-.gate-box p{color:var(--ink-soft);font-size:0.88rem;margin:0 0 28px;}
-.gate-box input{
-  width:100%;padding:12px 14px;border:1px solid var(--line);
-  border-radius:8px;font-size:1rem;font-family:'Inter',sans-serif;
-  background:#FCFBF8;color:var(--ink);margin-bottom:14px;
-  letter-spacing:0.08em;text-align:center;
-}
-.gate-box input:focus{outline:none;border-color:var(--brass);}
-.gate-box button{
-  width:100%;padding:12px;background:var(--ink);color:#fff;
-  border:none;border-radius:8px;font-family:'Inter',sans-serif;
-  font-weight:600;font-size:0.95rem;cursor:pointer;transition:opacity .15s;
-}
-.gate-box button:hover{opacity:0.85;}
-.gate-error{
-  color:var(--bad);font-size:0.8rem;margin-top:10px;min-height:1.1em;
-  font-family:'IBM Plex Mono',monospace;
-}
-.gate-logo{
-  width:52px;height:52px;background:var(--ink);border-radius:12px;
-  display:flex;align-items:center;justify-content:center;margin:0 auto 20px;
-}
+.user-menu-item:hover{background:#F7F4EE;}
+.user-menu-item.danger{color:var(--bad);}
+.user-menu-item.danger:hover{background:#FBF0EE;}
 
 /* ── Password gate ── */
 .drive-bar{
@@ -368,22 +362,17 @@ footer{text-align:center;color:var(--ink-soft);font-size:0.78rem;margin-top:20px
 </head>
 <body>
 
-<!-- Password gate — shown before anything else loads -->
-<div id="gate">
-  <div class="gate-box">
-    <div class="gate-logo">
-      <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-        <rect x="4" y="13" width="20" height="13" rx="2" fill="#F7F4EE"/>
-        <path d="M9 13V9a5 5 0 0 1 10 0v4" stroke="#A9793C" stroke-width="2.2" stroke-linecap="round"/>
-        <circle cx="14" cy="19" r="2" fill="#A9793C"/>
-      </svg>
-    </div>
-    <h1>Hotel Dashboard</h1>
-    <p>Enter your access password to continue</p>
-    <input type="password" id="gateInput" placeholder="••••••••" autocomplete="current-password">
-    <button id="gateBtn">Sign in</button>
-    <div class="gate-error" id="gateError"></div>
+<!-- Auth loading screen — shown while Supabase session is verified -->
+<div id="authLoading">
+  <div class="al-logo">
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+      <rect x="4" y="13" width="20" height="13" rx="2" fill="#F7F4EE"/>
+      <path d="M9 13V9a5 5 0 0 1 10 0v4" stroke="#A9793C" stroke-width="2.2" stroke-linecap="round"/>
+      <circle cx="14" cy="19" r="2" fill="#A9793C"/>
+    </svg>
   </div>
+  <div class="al-spinner"></div>
+  <div class="al-text">Verifying session…</div>
 </div>
 
 <div class="app-header">
@@ -392,12 +381,7 @@ footer{text-align:center;color:var(--ink-soft);font-size:0.78rem;margin-top:20px
   </div>
   <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
     <div class="key-badge"><span class="dot"></span>RevPAR = Total Revenue ÷ Available Rooms</div>
-    <!-- Profile link pill -->
-    <a class="profile-pill" id="profilePill" href="user-profile.html" title="Property profile &amp; settings">
-      <span class="pp-dot"></span>
-      <span id="profilePillLabel">Property Profile</span>
-    </a>
-    <!-- Compact Drive status button — always visible, links to Drive tab -->
+    <!-- Drive status button -->
     <button class="drive-header-btn" id="driveHeaderBtn" title="Google Drive sync">
       <svg viewBox="0 0 24 24" width="14" height="14" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M8.5 3.5L3 12.5l3.5 6h11l3.5-6L16.5 3.5H8.5z" stroke="currentColor" stroke-width="1.6" fill="none"/>
@@ -406,13 +390,30 @@ footer{text-align:center;color:var(--ink-soft);font-size:0.78rem;margin-top:20px
       <span class="drive-dot"></span>
       <span id="driveHeaderLabel">Google Drive</span>
     </button>
+    <!-- User pill with dropdown -->
+    <div class="user-pill" id="userPill" style="display:none;">
+      <div class="up-avatar" id="userAvatar"></div>
+      <span id="userNameLabel">Account</span>
+      <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style="opacity:.45;margin-left:2px;">
+        <path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+      <!-- Dropdown menu -->
+      <div class="user-menu" id="userMenu">
+        <div class="user-menu-header">
+          <div class="um-name" id="menuUserName">—</div>
+          <div class="um-email" id="menuUserEmail">—</div>
+        </div>
+        <button class="user-menu-item" onclick="location.href='user-profile.html'">
+          <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><rect x="1.5" y="1.5" width="12" height="12" rx="2" stroke="currentColor" stroke-width="1.4"/><path d="M5 8.5h5M5 6h5M5 11h3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+          Property profile
+        </button>
+        <button class="user-menu-item danger" id="signOutBtn">
+          <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M6 7.5h7M10.5 5l2.5 2.5L10.5 10M9 3H3a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Sign out
+        </button>
+      </div>
+    </div>
   </div>
-</div>
-
-<!-- Profile setup prompt (shown only when no profile exists yet) -->
-<div class="profile-setup-banner" id="profileSetupBanner" style="display:none;">
-  <span>👋 Set up your property profile to save your room count, Drive folders, and more — so you never have to re-enter them.</span>
-  <a href="user-profile.html">Set up profile →</a>
 </div>
 
 <!-- Sync status banner (shown briefly after a sync completes) -->
@@ -959,81 +960,6 @@ let prodWeeks=[];     // channel production weekly snapshots
 let charts={};
 let totalRooms=null;
 
-/* ─── Profile state ─── */
-let activeProfile=null; // full profile object loaded from user-profile.html's storage
-let currencySymbol='$'; // defaults to $ until profile loaded
-
-/* ── Load the active profile written by user-profile.html ── */
-function loadActiveProfile(){
-  try{
-    const activeId=localStorage.getItem('hd_activeProfile');
-    if(!activeId)return null;
-    const raw=localStorage.getItem('hd_profile_'+activeId);
-    return raw?JSON.parse(raw):null;
-  }catch(e){return null;}
-}
-
-/* ── Apply profile data to dashboard UI ── */
-function applyProfile(profile){
-  if(!profile)return;
-  activeProfile=profile;
-
-  // Currency symbol
-  if(profile.currency) currencySymbol=profile.currency;
-
-  // Header title — show property name if set
-  const titleEl=document.getElementById('headerTitle');
-  if(titleEl && profile.propName){
-    titleEl.textContent=profile.propName;
-  }
-
-  // Profile pill
-  const pill=document.getElementById('profilePill');
-  const pillLabel=document.getElementById('profilePillLabel');
-  if(pill && pillLabel){
-    if(profile.propName){
-      pillLabel.textContent=profile.propName;
-      pill.classList.add('has-profile');
-      pill.title=`Property: ${profile.propName}${profile.propCity?', '+profile.propCity:''}`;
-    } else {
-      pillLabel.textContent='Property Profile';
-    }
-  }
-
-  // Room count from profile (overrides settings key if profile has one)
-  if(profile.totalRooms){
-    const r=parseInt(profile.totalRooms,10);
-    if(r>0) totalRooms=r;
-  }
-
-  // Pre-fill Drive folder inputs from profile (before loadDrivePrefs may override)
-  const driveMap={
-    driveFolderName:'driveFolderCurrent',
-    driveHistFolderName:'driveFolderHistorical',
-    driveProdFolderName:'driveFolderProduction'
-  };
-  Object.entries(driveMap).forEach(([inputId, profileKey])=>{
-    const el=document.getElementById(inputId);
-    if(el && !el.value && profile[profileKey]) el.value=profile[profileKey];
-  });
-
-  // Hide setup banner — profile exists
-  const banner=document.getElementById('profileSetupBanner');
-  if(banner) banner.style.display='none';
-}
-
-/* ── Show setup banner if no profile configured ── */
-function maybeShowProfileBanner(){
-  const banner=document.getElementById('profileSetupBanner');
-  if(!banner)return;
-  const activeId=localStorage.getItem('hd_activeProfile');
-  const hasPropName=activeProfile&&activeProfile.propName;
-  // Show banner if no profile at all, or profile exists but has no name yet and no rooms
-  if(!activeId||(!hasPropName&&!totalRooms)){
-    banner.style.display='flex';
-  }
-}
-
 /* ─── Storage ─── */
 async function loadEntries(){try{const r=await window.storage.get('entries',false);entries=r&&r.value?JSON.parse(r.value):[];}catch(e){entries=[];}entries.sort((a,b)=>a.year-b.year||a.month-b.month);}
 async function saveEntries(){
@@ -1056,31 +982,8 @@ async function saveDailyEntries(){
     if(!result)console.error('saveDailyEntries: storage returned null');
   }catch(e){console.error('saveDailyEntries failed:',e);}
 }
-async function loadSettings(){
-  try{const r=await window.storage.get('settings',false);const s=r&&r.value?JSON.parse(r.value):{};totalRooms=s.rooms||null;}catch(e){totalRooms=null;}
-  // Profile overrides settings if it has a room count
-  const profile=loadActiveProfile();
-  if(profile){
-    applyProfile(profile);
-  } else {
-    maybeShowProfileBanner();
-  }
-}
-async function saveSettings(){
-  try{await window.storage.set('settings',JSON.stringify({rooms:totalRooms}),false);}catch(e){console.error('saveSettings failed:',e);}
-  // Write room count back to the active profile so user-profile.html stays in sync
-  try{
-    const activeId=localStorage.getItem('hd_activeProfile');
-    if(activeId){
-      const raw=localStorage.getItem('hd_profile_'+activeId);
-      const profile=raw?JSON.parse(raw):{};
-      profile.totalRooms=totalRooms?String(totalRooms):'';
-      profile.updatedAt=new Date().toISOString();
-      localStorage.setItem('hd_profile_'+activeId,JSON.stringify(profile));
-      if(activeProfile) activeProfile.totalRooms=profile.totalRooms;
-    }
-  }catch(e){console.error('saveSettings profile sync failed:',e);}
-}
+async function loadSettings(){try{const r=await window.storage.get('settings',false);const s=r&&r.value?JSON.parse(r.value):{};totalRooms=s.rooms||null;}catch(e){totalRooms=null;}}
+async function saveSettings(){try{await window.storage.set('settings',JSON.stringify({rooms:totalRooms}),false);}catch(e){console.error('saveSettings failed:',e);}}
 async function loadFinBudget(){try{const r=await window.storage.get('finBudget',false);finBudget=r&&r.value?JSON.parse(r.value):[];}catch(e){finBudget=[];}finBudget.sort((a,b)=>a.year-b.year||a.month-b.month);}
 async function saveFinBudget(){try{await window.storage.set('finBudget',JSON.stringify(finBudget),false);}catch(e){console.error('saveFinBudget failed:',e);}}
 async function loadFinActuals(){try{const r=await window.storage.get('finActuals',false);finActuals=r&&r.value?JSON.parse(r.value):[];}catch(e){finActuals=[];}finActuals.sort((a,b)=>a.year-b.year||a.month-b.month);}
@@ -1094,8 +997,8 @@ function availableRoomNights(y,m){return totalRooms?totalRooms*daysInMonth(y,m):
 function revparForEntry(e){const a=availableRoomNights(e.year,e.month);return a?e.revenue/a:null;}
 
 /* ─── Formatters ─── */
-function fmtMoney(n){return currencySymbol+Number(n).toLocaleString(undefined,{maximumFractionDigits:0});}
-function fmtMoney2(n){return currencySymbol+Number(n).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});}
+function fmtMoney(n){return '$'+Number(n).toLocaleString(undefined,{maximumFractionDigits:0});}
+function fmtMoney2(n){return '$'+Number(n).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});}
 function fmtPct(n){return Number(n).toFixed(1)+'%';}
 function deltaHTML(cur,prior,higherIsBetter=true){
   if(prior===undefined||prior===null||!isFinite(prior)||prior===0)return`<span class="delta flat">no prior data</span>`;
@@ -1961,14 +1864,7 @@ document.getElementById('csvMultiConfirmBtn').addEventListener('click',async()=>
 /* ─── Property setup ─── */
 document.getElementById('f-rooms').addEventListener('change',async ev=>{
   const val=parseInt(ev.target.value,10);totalRooms=(val&&val>0)?val:null;await saveSettings();
-  document.getElementById('roomsMsg').textContent=totalRooms
-    ?`Saved. Room-nights = ${totalRooms} rooms × days in month.`
-    :'Enter room count to enable RevPAR.';
-  // Hide setup banner once room count is entered
-  if(totalRooms){
-    const banner=document.getElementById('profileSetupBanner');
-    if(banner) banner.style.display='none';
-  }
+  document.getElementById('roomsMsg').textContent=totalRooms?`Saved. Room-nights = ${totalRooms} rooms × days in month.`:'Enter room count to enable RevPAR.';
   render();
 });
 
@@ -2260,45 +2156,18 @@ function loadDrivePrefs(){
     if(p.processedIds)      processedCsvIds = new Set(p.processedIds);
     if(p.lastSync)          document.getElementById('driveLastSync').textContent    = p.lastSync;
   }catch(e){}
-  // Fill any blank folder inputs from the active profile
-  if(activeProfile){
-    const map={driveFolderName:'driveFolderCurrent',driveHistFolderName:'driveFolderHistorical',driveProdFolderName:'driveFolderProduction'};
-    Object.entries(map).forEach(([inputId,profileKey])=>{
-      const el=document.getElementById(inputId);
-      if(el&&!el.value&&activeProfile[profileKey]) el.value=activeProfile[profileKey];
-    });
-  }
 }
 function saveDrivePrefs(){
-  const folderName      = document.getElementById('driveFolderName').value.trim();
-  const histFolderName  = document.getElementById('driveHistFolderName').value.trim();
-  const prodFolderName  = document.getElementById('driveProdFolderName').value.trim();
-  const finRevFolderName= document.getElementById('driveFinRevFolderName').value.trim();
   try{
     localStorage.setItem('hotelDrivePrefs', JSON.stringify({
-      folderName, histFolderName, prodFolderName, finRevFolderName,
-      processedIds: [...processedCsvIds],
-      lastSync:     document.getElementById('driveLastSync').textContent
+      folderName:       document.getElementById('driveFolderName').value.trim(),
+      histFolderName:   document.getElementById('driveHistFolderName').value.trim(),
+      prodFolderName:   document.getElementById('driveProdFolderName').value.trim(),
+      finRevFolderName: document.getElementById('driveFinRevFolderName').value.trim(),
+      processedIds:     [...processedCsvIds],
+      lastSync:         document.getElementById('driveLastSync').textContent
     }));
   }catch(e){}
-  // Write folder names back to active profile so user-profile.html stays in sync
-  try{
-    const activeId=localStorage.getItem('hd_activeProfile');
-    if(activeId){
-      const raw=localStorage.getItem('hd_profile_'+activeId);
-      const profile=raw?JSON.parse(raw):{};
-      if(folderName)     profile.driveFolderCurrent=folderName;
-      if(histFolderName) profile.driveFolderHistorical=histFolderName;
-      if(prodFolderName) profile.driveFolderProduction=prodFolderName;
-      profile.updatedAt=new Date().toISOString();
-      localStorage.setItem('hd_profile_'+activeId,JSON.stringify(profile));
-      if(activeProfile){
-        activeProfile.driveFolderCurrent=folderName;
-        activeProfile.driveFolderHistorical=histFolderName;
-        activeProfile.driveFolderProduction=prodFolderName;
-      }
-    }
-  }catch(e){console.error('saveDrivePrefs profile sync failed:',e);}
 }
 
 /* ── GAPI initialisation ── */
@@ -2758,62 +2627,85 @@ saveEntries = async function(){
 };
 
 /* ════════════════════════════════════════
-   PASSWORD GATE
+   SUPABASE AUTH GUARD
 ════════════════════════════════════════ */
 
-// SHA-256 hash of the password — change this to set a new password.
-// Current password: Flamingo1
-const GATE_HASH = '6c06e620de0d76119ec4992711e1e715c6ee4e68968c8bb4ec32a86079c21c5a';
+let currentUser = null;
 
-async function sha256(str){
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
-  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+function hideAuthLoading(){
+  const el = document.getElementById('authLoading');
+  if(!el) return;
+  el.style.opacity = '0';
+  el.style.transition = 'opacity 0.25s ease';
+  setTimeout(()=>{ el.style.display='none'; }, 250);
 }
 
-async function checkGate(password){
-  const hash = await sha256(password);
-  return hash === GATE_HASH;
-}
+function renderUserPill(user){
+  if(!user) return;
+  currentUser = user;
 
-function unlockGate(){
-  const gate = document.getElementById('gate');
-  gate.style.opacity = '0';
-  gate.style.transition = 'opacity 0.3s ease';
-  setTimeout(()=>gate.style.display='none', 300);
-}
+  const pill    = document.getElementById('userPill');
+  const avatar  = document.getElementById('userAvatar');
+  const label   = document.getElementById('userNameLabel');
+  const mName   = document.getElementById('menuUserName');
+  const mEmail  = document.getElementById('menuUserEmail');
 
-async function initGate(){
-  // Check if already authenticated this session
-  try{
-    if(sessionStorage.getItem('hd_auth') === '1'){ unlockGate(); return; }
-  }catch(e){}
+  const name    = Auth.getUserDisplayName(user);
+  const avatarUrl = Auth.getUserAvatar(user);
 
-  const input = document.getElementById('gateInput');
-  const btn   = document.getElementById('gateBtn');
-  const err   = document.getElementById('gateError');
+  label.textContent  = name;
+  mName.textContent  = name;
+  mEmail.textContent = user.email || '';
 
-  async function attempt(){
-    const pw = input.value;
-    if(!pw){ err.textContent = 'Please enter a password.'; return; }
-    btn.textContent = 'Checking…'; btn.disabled = true;
-    const ok = await checkGate(pw);
-    if(ok){
-      try{ sessionStorage.setItem('hd_auth','1'); }catch(e){}
-      unlockGate();
-    } else {
-      err.textContent = 'Incorrect password — try again.';
-      input.value = '';
-      input.focus();
-      btn.textContent = 'Sign in'; btn.disabled = false;
-    }
+  if(avatarUrl){
+    avatar.innerHTML = `<img src="${avatarUrl}" alt="${name}">`;
+  } else {
+    avatar.textContent = name.charAt(0).toUpperCase();
   }
 
-  btn.addEventListener('click', attempt);
-  input.addEventListener('keydown', e=>{ if(e.key==='Enter') attempt(); });
-  input.focus();
+  pill.style.display = 'inline-flex';
 }
 
-if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',initGate);}else{initGate();}
+// Toggle user dropdown
+document.getElementById('userPill')?.addEventListener('click', function(e){
+  e.stopPropagation();
+  document.getElementById('userMenu').classList.toggle('open');
+});
+document.addEventListener('click', ()=>{
+  document.getElementById('userMenu')?.classList.remove('open');
+});
+
+// Sign out
+document.getElementById('signOutBtn')?.addEventListener('click', async ()=>{
+  await Auth.signOut(); // redirects to login.html
+});
+
+// ── Session check on load ─────────────────────────────────────────
+(async function checkAuth(){
+  try{
+    const session = await Auth.getSession();
+    if(!session){
+      // No session — redirect to login
+      location.href = 'login.html';
+      return;
+    }
+    renderUserPill(session.user);
+    hideAuthLoading();
+  } catch(e){
+    console.error('Auth check failed:', e);
+    location.href = 'login.html';
+  }
+})();
+
+// ── Watch for session changes (tab focus, token expiry) ───────────
+Auth.onAuthStateChange((event, session)=>{
+  if(event === 'SIGNED_OUT' || !session){
+    location.href = 'login.html';
+  }
+  if(event === 'SIGNED_IN' && session){
+    renderUserPill(session.user);
+  }
+});
 
 /* ─── Init ─── */
 function waitForChart(cb,tries=0){
@@ -2857,11 +2749,7 @@ function waitForChart(cb,tries=0){
     document.getElementById('f-rooms').value=totalRooms;
     document.getElementById('roomsMsg').textContent=`Room-nights = ${totalRooms} rooms × days in month.`;
   } else {
-    document.getElementById('roomsMsg').textContent=
-      activeProfile&&activeProfile.propName
-        ?`Set rooms for ${activeProfile.propName} to enable RevPAR.`
-        :'Enter room count to enable RevPAR. <a href="user-profile.html" style="color:var(--brass)">Set up profile</a> to save it permanently.';
-    maybeShowProfileBanner();
+    document.getElementById('roomsMsg').textContent='Enter room count to enable RevPAR.';
   }
   // Render data-driven content immediately
   renderSummary();
