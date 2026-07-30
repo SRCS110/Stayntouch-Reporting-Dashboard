@@ -3029,19 +3029,21 @@ document.addEventListener('keydown', e=>{
 // ── Session check on load ─────────────────────────────────────────
 (async function checkAuth(){
   try{
+    // Loop breaker — if we just came from login, don't redirect back
+    const redirectCount = parseInt(sessionStorage.getItem('_authRedirects') || '0');
+    if(redirectCount > 2){
+      sessionStorage.removeItem('_authRedirects');
+      hideAuthLoading();
+      return;
+    }
+
     const session = await Auth.getSession();
     if(!session){
-      // No session — redirect to login
+      sessionStorage.setItem('_authRedirects', redirectCount + 1);
       location.href = 'login.html';
       return;
     }
-    renderUserPill(session.user);
-    hideAuthLoading();
-  } catch(e){
-    console.error('Auth check failed:', e);
-    location.href = 'login.html';
-  }
-})();
+    sessionStorage.removeItem('_authRedirects');
 
 // ── Watch for session changes (tab focus, token expiry) ───────────
 Auth.onAuthStateChange((event, session)=>{
