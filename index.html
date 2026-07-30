@@ -30,11 +30,11 @@
 })();
 </script>
 <!-- Supabase JS v2 — must load before auth.js -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" defer></script>
 <!-- Shared auth module -->
-<script src="auth.js"></script>
+<script src="auth.js" defer></script>
 <!-- Supabase data layer — replaces localStorage window.storage polyfill -->
-<script src="db.js"></script>
+<script src="db.js" defer></script>
 <script src="https://accounts.google.com/gsi/client" async defer onload="if(typeof onGisLoad==='function')onGisLoad()"></script>
 <script src="https://apis.google.com/js/api.js" async defer onload="if(typeof onGapiLoad==='function')onGapiLoad()"></script>
 <style>
