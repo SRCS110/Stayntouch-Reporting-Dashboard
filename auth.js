@@ -24,9 +24,13 @@ function getClient() {
   if (!window.supabase) throw new Error('Supabase CDN not loaded');
   _client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON, {
     auth: {
-      autoRefreshToken: true,
-      persistSession:   true,
-      detectSessionInUrl: true   // picks up OAuth callback hash
+      autoRefreshToken:   true,
+      persistSession:     true,
+      detectSessionInUrl: true,
+      // Use localStorage explicitly — fixes Safari ITP blocking sessionStorage
+      storage:            window.localStorage,
+      storageKey:         'sb-kflpqbxavcumqmoicquo-auth-token',
+      flowType:           'pkce'  // more reliable than implicit flow across browsers
     }
   });
   return _client;
@@ -51,7 +55,8 @@ async function signInWithGoogle() {
   const { error } = await getClient().auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: `${location.origin}/index.html`
+      redirectTo:  'https://sntreporting.srcs.online/index.html',
+      queryParams: { access_type: 'offline', prompt: 'consent' }
     }
   });
   if (error) throw error;

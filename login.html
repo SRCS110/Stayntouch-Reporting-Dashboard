@@ -8,10 +8,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
 
-<!-- Supabase JS v2 -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<!-- Shared auth module -->
-<script src="auth.js"></script>
+<!-- Supabase JS v2 — must be fully loaded before auth.js -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" defer></script>
+<!-- Shared auth module — loads after Supabase -->
+<script src="auth.js" defer></script>
 
 <style>
 :root{
@@ -245,15 +245,26 @@ body::before{
 <script>
 /* ════════════════════════════════════════════════════
    Login page controller
+   Wrapped in waitForAuth() — guarantees window.Auth
+   exists before any Auth.* call, regardless of whether
+   the deferred scripts have fully executed yet.
 ════════════════════════════════════════════════════ */
 
+function waitForAuth(cb, tries = 0) {
+  if (window.Auth) { cb(); return; }
+  if (tries < 100) setTimeout(() => waitForAuth(cb, tries + 1), 50);
+  else console.error('auth.js never loaded');
+}
+
+waitForAuth(function() {
+
 // If already logged in, skip straight to the dashboard
-//(async () => {
-  //try {
-    //const session = await Auth.getSession();
-    //if (session) { location.href = 'index.html'; return; }
- // } catch(e) {}
-//})();
+(async () => {
+  try {
+    const session = await Auth.getSession();
+    if (session) { location.href = 'index.html'; return; }
+  } catch(e) {}
+})();
 
 // Check for password reset mode (redirected from reset email)
 const urlParams = new URLSearchParams(location.search);
@@ -317,16 +328,15 @@ async function handleEmailAuth() {
 }
 
 /* ── Google ── */
-document.getElementById('googleBtn').addEventListener('click', async () => {
+document.getElementById('googleBtn').addEventListener('click', () => {
+  // Must NOT be async — popup blockers kill popups opened after any await
+  // Supabase signInWithGoogle does a redirect (not a popup) so this is safe
   setLoading('googleBtn', true);
   clearMsg();
-  try {
-    await Auth.signInWithGoogle();
-    // Redirect happens automatically via Supabase OAuth
-  } catch (err) {
+  Auth.signInWithGoogle().catch(err => {
     showMsg(friendlyError(err.message), 'error');
     setLoading('googleBtn', false);
-  }
+  });
 });
 
 /* ── Forgot password ── */
@@ -421,6 +431,8 @@ function friendlyError(msg = '') {
   if (/network/i.test(msg))                       return 'Network error — check your connection.';
   return msg || 'Something went wrong. Please try again.';
 }
+
+}); // end waitForAuth
 </script>
 </body>
 </html>
