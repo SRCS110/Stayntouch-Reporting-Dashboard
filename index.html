@@ -3029,29 +3029,56 @@ document.addEventListener('keydown', e=>{
 // ── Session check on load ─────────────────────────────────────────
 (async function checkAuth(){
   try{
-    // Loop breaker — if we just came from login, don't redirect back
-    const redirectCount = parseInt(sessionStorage.getItem('_authRedirects') || '0');
-    if(redirectCount > 2){
-      sessionStorage.removeItem('_authRedirects');
-      hideAuthLoading();
-      return;
-    }
+    // Wait for Auth module to be ready (Safari can be slow)
+    await new Promise(resolve => {
+      if(window.Auth){ resolve(); return; }
+      let tries = 0;
+      const t = setInterval(()=>{
+        if(window.Auth || ++tries > 60){ clearInterval(t); resolve(); }
+      }, 50);
+    });
 
-    const session = await Auth.getSession();
-    if(!session){
-      sessionStorage.setItem('_authRedirects', redirectCount + 1);
+    if(!window.Auth){
+      // Auth module never loaded — go to login
       location.href = 'login.html';
       return;
     }
-    sessionStorage.removeItem('_authRedirects');
 
-// ── Watch for session changes (tab focus, token expiry) ───────────
+    // Race getSession against a 6-second timeout (fixes Safari ITP hang)
+    const session = await Promise.race([
+      Auth.getSession(),
+      new Promise(resolve => setTimeout(() => resolve(null), 6000))
+    ]);
+
+    if(!session){
+      location.href = 'login.html';
+      return;
+    }
+    renderUserPill(session.user);
+    hideAuthLoading();
+  } catch(e){
+    console.error('Auth check failed:', e);
+    location.href = 'login.html';
+  }
+})();
+
+// ── Watch for session changes AFTER initial load only ────────────
+// Delay wiring this up so it doesn't fire on the initial page load
+// before checkAuth has had a chance to verify the session.
+let _authInitComplete = false;
+setTimeout(() => { _authInitComplete = true; }, 3000);
+
 Auth.onAuthStateChange((event, session)=>{
-  if(event === 'SIGNED_OUT' || !session){
+  if(!_authInitComplete) return; // ignore events during initial load
+  if(event === 'SIGNED_OUT'){
+    location.href = 'login.html';
+  }
+  if(event === 'TOKEN_REFRESHED' && !session){
     location.href = 'login.html';
   }
   if(event === 'SIGNED_IN' && session){
     renderUserPill(session.user);
+    hideAuthLoading();
   }
 });
 
