@@ -35,8 +35,6 @@
 <script src="auth.js"></script>
 <!-- Supabase data layer — synchronous, runs after auth.js -->
 <script src="db.js"></script>
-<script src="https://accounts.google.com/gsi/client" async defer onload="if(typeof onGisLoad==='function')onGisLoad()"></script>
-<script src="https://apis.google.com/js/api.js" async defer onload="if(typeof onGapiLoad==='function')onGapiLoad()"></script>
 <style>
 /* ══════════════════════════════════════════
    DESIGN SYSTEM — StayNTouch-inspired
@@ -371,8 +369,70 @@ canvas{max-height:240px;}
 .drawer-save-msg{font-size:0.78rem;color:var(--ink-soft);flex:1;}
 .drawer-save-msg.ok{color:var(--good);}
 .drawer-save-msg.err{color:var(--bad);}
+/* ── Upload tab ── */
+.upload-section{background:var(--card);border:1px solid var(--line);border-radius:var(--radius-lg);margin-bottom:20px;overflow:hidden;box-shadow:var(--shadow);}
+.upload-section-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--line);background:#FAFBFC;}
+.upload-section-header h3{font-size:0.82rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--ink);margin:0;}
+.upload-section-header .ush-sub{font-size:0.72rem;color:var(--ink-soft);margin-top:2px;}
+.upload-section-header .ush-badge{display:inline-flex;align-items:center;gap:5px;font-size:0.65rem;font-weight:700;padding:3px 9px;border-radius:999px;}
+.ush-badge.live{background:var(--green-soft);color:var(--good);}
+.ush-badge.hist{background:var(--blue-soft);color:var(--accent);}
+.ush-badge.pace{background:var(--purple-soft);color:var(--purple);}
+.upload-section-body{padding:20px;}
+.upload-drop-zone{
+  border:2px dashed var(--line);border-radius:var(--radius);padding:28px 20px;
+  text-align:center;cursor:pointer;transition:all .15s;background:#FAFBFC;
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+}
+.upload-drop-zone:hover,.upload-drop-zone.drag-over{
+  border-color:var(--accent);background:var(--accent-soft);
+}
+.upload-drop-zone .udz-icon{font-size:1.8rem;opacity:0.4;}
+.upload-drop-zone .udz-label{font-size:0.85rem;font-weight:600;color:var(--ink);}
+.upload-drop-zone .udz-sub{font-size:0.72rem;color:var(--ink-soft);}
+.upload-drop-zone .udz-btn{
+  margin-top:6px;display:inline-flex;align-items:center;gap:6px;
+  font-size:0.78rem;font-weight:600;padding:7px 16px;border-radius:6px;
+  background:var(--accent);color:#fff;border:none;cursor:pointer;
+  font-family:'Inter',sans-serif;
+}
+.upload-result{margin-top:14px;display:none;}
+.upload-result.show{display:block;}
+.upload-result-bar{
+  display:flex;align-items:center;gap:10px;padding:10px 14px;
+  border-radius:8px;background:var(--green-soft);border:1px solid var(--green);
+  font-size:0.8rem;font-weight:600;color:var(--good);margin-bottom:10px;
+}
+.upload-result-bar.error{background:var(--red-soft);border-color:var(--red);color:var(--bad);}
+.upload-result-bar.warning{background:var(--orange-soft);border-color:var(--orange);color:var(--warn);}
+.upload-result-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:10px;}
+@media(max-width:600px){.upload-result-stats{grid-template-columns:repeat(2,1fr);}}
+.urs-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:10px 12px;}
+.urs-card .urs-label{font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--ink-soft);margin-bottom:3px;}
+.urs-card .urs-val{font-size:1.05rem;font-weight:700;color:var(--ink);}
+.upload-history{margin-top:16px;}
+.upload-history h4{font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--ink-soft);margin:0 0 8px;}
+.upload-log-table{width:100%;border-collapse:collapse;font-size:0.75rem;}
+.upload-log-table th{text-align:left;font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:var(--ink-soft);padding:6px 10px;border-bottom:2px solid var(--line);background:#FAFBFC;}
+.upload-log-table td{padding:7px 10px;border-bottom:1px solid var(--line);color:var(--ink);}
+.upload-log-table tr:last-child td{border-bottom:none;}
+.upload-log-table tr:hover td{background:#F8FAFC;}
+.upload-notice{
+  background:var(--accent-soft);border:1px solid var(--blue-soft);
+  border-radius:var(--radius);padding:12px 16px;font-size:0.78rem;
+  color:var(--ink-soft);line-height:1.55;margin-top:16px;
+}
+.upload-notice strong{color:var(--ink);}
+.multi-upload-queue{margin-top:12px;display:none;}
+.multi-upload-queue.show{display:block;}
+.muq-row{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--line);font-size:0.78rem;}
+.muq-row:last-child{border-bottom:none;}
+.muq-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink);}
+.muq-status{font-size:0.7rem;font-weight:600;padding:2px 7px;border-radius:4px;}
+.muq-status.pending{background:var(--paper);color:var(--ink-soft);}
+.muq-status.ok{background:var(--green-soft);color:var(--good);}
+.muq-status.err{background:var(--red-soft);color:var(--bad);}
 </style>
-</head>
 <body>
 
 <!-- Auth loading screen — shown while Supabase session is verified -->
@@ -404,7 +464,7 @@ canvas{max-height:240px;}
         <path d="M3 12.5h18M12 3.5L6.5 20M12 3.5L17.5 20" stroke="currentColor" stroke-width="1.6"/>
       </svg>
       <span class="drive-dot"></span>
-      <span id="driveHeaderLabel">Google Drive</span>
+      <span id="driveHeaderLabel">Data Upload</span>
     </button>
     <!-- User pill with dropdown -->
     <div class="user-pill" id="userPill" style="display:none;">
@@ -571,7 +631,7 @@ canvas{max-height:240px;}
   <button class="tab-btn" data-tab="history">History</button>
   <button class="tab-btn" data-tab="rate-audit">Rate Audit</button>
   <button class="tab-btn" data-tab="financials">Financials</button>
-  <button class="tab-btn" data-tab="google-drive" id="driveTabBtn">Google Drive</button>
+  <button class="tab-btn" data-tab="google-drive" id="driveTabBtn">Data Upload</button>
 </nav>
 
 <!-- ═══════════════════ DASHBOARD TAB ═══════════════════ -->
@@ -1083,81 +1143,157 @@ canvas{max-height:240px;}
 
 </div><!-- /financials -->
 
-<!-- ═══════════════════ GOOGLE DRIVE TAB ═══════════════════ -->
+<!-- ═══════════════════ DATA UPLOAD TAB ═══════════════════ -->
 <div id="tab-google-drive" class="tab-panel">
 
-  <!-- Connection status bar -->
-  <div class="drive-status-bar" id="driveStatusBar">
-    <div class="status-dot"></div>
-    <span class="status-text" id="driveStatus">Not connected to Google Drive</span>
-    <span id="driveLastSync" style="font-size:0.72rem;color:var(--ink-soft);font-family:'IBM Plex Mono',monospace;margin-left:auto;"></span>
+  <!-- ── Section 1: Business on the Books (Current) ── -->
+  <div class="upload-section">
+    <div class="upload-section-header">
+      <div>
+        <h3>Business on the Books — Current</h3>
+        <div class="ush-sub">Daily occupancy data — re-upload any time to refresh. Overwrites existing data for the same dates.</div>
+      </div>
+      <span class="ush-badge live">● Live data</span>
+    </div>
+    <div class="upload-section-body">
+      <div class="upload-drop-zone" id="botbCurrentZone">
+        <div class="udz-icon">📄</div>
+        <div class="udz-label">Drop BotB CSV files here</div>
+        <div class="udz-sub">Supports single or multiple files — all will be merged</div>
+        <button class="udz-btn" onclick="document.getElementById('botbCurrentFile').click()">
+          Select files
+        </button>
+        <input type="file" id="botbCurrentFile" accept=".csv" multiple style="display:none;">
+      </div>
+      <div class="multi-upload-queue" id="botbCurrentQueue"></div>
+      <div class="upload-result" id="botbCurrentResult"></div>
+      <div class="upload-notice">
+        <strong>Current BotB</strong> — Upload the "Business on the Books" CSV export from StayNTouch. Each upload overwrites daily data for the dates covered, so you always have the latest occupancy picture. Upload as often as you like — daily is recommended.
+      </div>
+    </div>
   </div>
 
-  <!-- Sign-in card (shown when not connected) -->
-  <div class="drive-connect-card" id="driveConnectCard">
-    <div style="flex:1;">
-      <h3>Connect Google Drive</h3>
-      <p>Sign in to automatically sync your PMS exports. Once connected, the dashboard re-imports current-year reports on every sync and locks historical files after first import.</p>
+  <!-- ── Section 2: Business on the Books (Historical) ── -->
+  <div class="upload-section">
+    <div class="upload-section-header">
+      <div>
+        <h3>Business on the Books — Historical</h3>
+        <div class="ush-sub">Prior year actuals — import once, never overwritten. Used for YOY comparisons.</div>
+      </div>
+      <span class="ush-badge hist">● Historical</span>
     </div>
-    <button class="drive-pill" id="driveSignInBtn" style="flex-shrink:0;">
-      <svg viewBox="0 0 24 24" width="16" height="16">
-        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
-        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-      </svg>
-      Sign in with Google
-    </button>
+    <div class="upload-section-body">
+      <div class="upload-drop-zone" id="botbHistZone">
+        <div class="udz-icon">📁</div>
+        <div class="udz-label">Drop historical BotB CSV files here</div>
+        <div class="udz-sub">Prior year exports — data is inserted once and never overwritten</div>
+        <button class="udz-btn" onclick="document.getElementById('botbHistFile').click()">
+          Select files
+        </button>
+        <input type="file" id="botbHistFile" accept=".csv" multiple style="display:none;">
+      </div>
+      <div class="multi-upload-queue" id="botbHistQueue"></div>
+      <div class="upload-result" id="botbHistResult"></div>
+      <div class="upload-notice">
+        <strong>Historical BotB</strong> — Upload prior-year Business on the Books exports. Each date row is inserted only if no data already exists for that date — existing historical data is never overwritten. Upload your full prior year once to establish the baseline.
+      </div>
+    </div>
   </div>
 
-  <!-- Folder configuration + sync controls (shown when connected) -->
-  <div id="driveFolderRow" style="display:none;">
-
-    <div class="drive-folders-card">
-      <h3>Drive folder names</h3>
-      <div class="drive-folder-entry">
-        <label for="driveFolderName">Current BotB</label>
-        <input type="text" id="driveFolderName" placeholder="e.g. Hotel PMS Exports" title="Folder where your PMS drops the current Business on the Books CSVs — re-imported on every sync">
-        <span class="folder-hint">Live occupancy — overwrites daily</span>
+  <!-- ── Section 3: Production by Rate (Channel Production) ── -->
+  <div class="upload-section">
+    <div class="upload-section-header">
+      <div>
+        <h3>Production by Rate — Channel Production</h3>
+        <div class="ush-sub">Weekly channel production snapshots by rate plan. Each upload adds a new week column.</div>
       </div>
-      <div class="drive-folder-entry">
-        <label for="driveHistFolderName">Historical BotB</label>
-        <input type="text" id="driveHistFolderName" placeholder="e.g. Hotel Historical Reports" title="Folder with prior-year BotB CSVs — each file imported once, never re-imported">
-        <span class="folder-hint">Prior year actuals — import once</span>
+      <span class="ush-badge pace">● Weekly</span>
+    </div>
+    <div class="upload-section-body">
+      <div class="upload-drop-zone" id="prodZone">
+        <div class="udz-icon">📊</div>
+        <div class="udz-label">Drop Production by Rate CSV files here</div>
+        <div class="udz-sub">Weekly snapshots — each file adds or updates one week column</div>
+        <button class="udz-btn" onclick="document.getElementById('prodFile').click()">
+          Select files
+        </button>
+        <input type="file" id="prodFile" accept=".csv" multiple style="display:none;">
       </div>
-      <div class="drive-folder-entry">
-        <label for="driveProdFolderName">Production by Rate</label>
-        <input type="text" id="driveProdFolderName" placeholder="e.g. Hotel Channel Production" title="Folder where your PMS drops the Daily Production by Rate CSVs">
-        <span class="folder-hint">Weekly channel snapshots</span>
-      </div>
-      <div class="drive-folder-entry" style="opacity:0.55;">
-        <label style="color:var(--accent);">Financial Revenue</label>
-        <input type="text" id="driveFinRevFolderName" placeholder="Financial transaction reports" disabled>
-        <span class="coming-soon">coming soon</span>
+      <div class="multi-upload-queue" id="prodQueue"></div>
+      <div class="upload-result" id="prodResult"></div>
+      <div class="upload-notice">
+        <strong>Production by Rate</strong> — Upload the "Daily Production by Rate" CSV export from StayNTouch. Each file represents one week. Re-uploading the same week overwrites that week's data. Historical weeks are preserved.
       </div>
     </div>
-
-    <div class="drive-actions-row">
-      <button class="btn-primary" id="driveScanBtn" style="display:inline-flex;align-items:center;gap:8px;">
-        <div class="sync-spinner" id="syncSpinner"></div>
-        Sync now
-      </button>
-      <button class="btn-ghost" id="driveSaveDataBtn">Save to Drive</button>
-      <button class="drive-pill" id="driveSignOutBtn" style="margin-left:auto;">Sign out</button>
-    </div>
-
-    <hr class="drive-divider">
-
-    <div class="drive-notice">
-      <strong>How sync works</strong> — Current-year reports in the Current BotB and Production by Rate folders are re-imported on every sync, overwriting any existing data for those dates. Historical BotB reports are imported once and then locked; they are never re-fetched. If Drive converted your CSV files to Google Sheets format, the sync handles that automatically.
-    </div>
-
   </div>
 
-</div><!-- /google-drive -->
+  <!-- ── Section 4: Reservations by User (STLY Pace) ── -->
+  <div class="upload-section">
+    <div class="upload-section-header">
+      <div>
+        <h3>Booking Pace — Reservations by User</h3>
+        <div class="ush-sub">Same-time-last-year pace reports. Upload current year and prior year to compare booking windows.</div>
+      </div>
+      <span class="ush-badge pace">● Pace</span>
+    </div>
+    <div class="upload-section-body">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+
+        <!-- Current year slot -->
+        <div>
+          <div style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--ink-soft);margin-bottom:8px;">Current Year Report</div>
+          <div class="upload-drop-zone" id="stlyCurrentZone" style="padding:20px 14px;">
+            <div class="udz-label" style="font-size:0.78rem;">Current year</div>
+            <div class="udz-sub">Created last 365 days, next month arrivals</div>
+            <button class="udz-btn" style="font-size:0.72rem;padding:5px 12px;" onclick="document.getElementById('stlyCurrentFile2').click()">Select file</button>
+            <input type="file" id="stlyCurrentFile2" accept=".csv" style="display:none;">
+          </div>
+          <div class="upload-result" id="stlyCurrentResult2" style="margin-top:8px;"></div>
+          <div class="sil-status" id="stlyUploadCurStatus" style="font-size:0.73rem;margin-top:6px;color:var(--ink-soft);"></div>
+        </div>
+
+        <!-- Prior year slot -->
+        <div>
+          <div style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--ink-soft);margin-bottom:8px;">Prior Year Report (STLY)</div>
+          <div class="upload-drop-zone" id="stlyPriorZone" style="padding:20px 14px;">
+            <div class="udz-label" style="font-size:0.78rem;">Prior year</div>
+            <div class="udz-sub">Same window one year earlier</div>
+            <button class="udz-btn" style="font-size:0.72rem;padding:5px 12px;" onclick="document.getElementById('stlyPriorFile2').click()">Select file</button>
+            <input type="file" id="stlyPriorFile2" accept=".csv" style="display:none;">
+          </div>
+          <div class="upload-result" id="stlyPriorResult2" style="margin-top:8px;"></div>
+          <div class="sil-status" id="stlyUploadLyStatus" style="font-size:0.73rem;margin-top:6px;color:var(--ink-soft);"></div>
+        </div>
+
+      </div>
+      <div class="upload-notice" style="margin-top:16px;">
+        <strong>Reservations by User by Date Range</strong> — Run this report twice in StayNTouch: once for the current booking window (last 365 days, next month arrivals) and once for the prior year equivalent window. The dashboard reads Total Revenue and Room Nights from the report header to calculate ADR, occupancy, and RevPAR pace.
+      </div>
+
+      <!-- Upload history log (shared with dashboard STLY panel) -->
+      <div class="stly-log" id="stlyLog2" style="margin-top:16px;">
+        <div class="stly-log-header">
+          <span>Upload history</span>
+          <button id="stlyLogClearAllBtn2" title="Clear all upload history">Clear all history</button>
+        </div>
+        <div id="stlyLogBody2"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Upload status summary ── -->
+  <div class="panel" id="uploadSummaryPanel" style="margin-top:4px;">
+    <div class="section-head" style="margin-bottom:12px;">
+      <h2>Upload Summary</h2>
+      <span class="sub" id="uploadSummaryDate"></span>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;" id="uploadSummaryGrid"></div>
+  </div>
+
+</div><!-- /upload -->
 
 <footer style="text-align:center;color:var(--ink-soft);font-size:0.78rem;padding:20px 0 40px;">
-  Data stored privately in your browser session.
+  Data stored securely in your Supabase database.
 </footer>
 
 <script>
@@ -1282,6 +1418,7 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
     if(btn.dataset.tab==='calendar') renderCalendar();
     if(btn.dataset.tab==='rate-audit') waitForChart(renderAudit);
     if(btn.dataset.tab==='financials') renderFinancials();
+    if(btn.dataset.tab==='google-drive'){ renderUploadSummary(); renderSTLYLog2(); }
   });
 });
 
@@ -2882,498 +3019,371 @@ document.getElementById('finActualsSaveBtn').addEventListener('click',async()=>{
   renderFinancials();
 });
 /* ════════════════════════════════════════
-   GOOGLE DRIVE INTEGRATION
+   DATA UPLOAD TAB
+   Direct CSV upload — replaces Google Drive sync.
+   Uses the same parsers (parseCSVContent, parseProdCSV)
+   already defined in the file.
+   
+   Sections:
+   1. Current BotB  — overwrites daily data for covered dates
+   2. Historical BotB — insert-only, never overwrites
+   3. Production by Rate — upserts by weekKey
+   4. STLY Pace reports — wired to existing stlyData/stlyLog
 ════════════════════════════════════════ */
 
-const GOOG_CLIENT_ID = '214754045901-akrebve7v6aevko3r65srg59oeu00d8j.apps.googleusercontent.com';
-const GOOG_SCOPES = 'https://www.googleapis.com/auth/drive';
-const DASHBOARD_DATA_FILENAME = 'hotel-dashboard-data.json';
+/* ── Drop-zone drag-and-drop wiring ── */
+function wireDropZone(zoneId, inputId, handler){
+  const zone = document.getElementById(zoneId);
+  const input = document.getElementById(inputId);
+  if(!zone||!input) return;
 
-let driveAccessToken = null;
-let driveTokenClient = null;
-let gapiReady = false;
-let gisReady = false;
-let dashboardFileId = null; // ID of our JSON data file in Drive
-let pmsFolderId = null;     // ID of the PMS export folder
-let processedCsvIds = new Set(); // Drive file IDs we've already imported
-
-/* ── Load Drive prefs from Supabase (via window.storage) ── */
-async function loadDrivePrefs(){
-  try{
-    const r = await window.storage.get('drivePrefs');
-    const p = r && r.value ? JSON.parse(r.value) : {};
-    if(p.folderName)     document.getElementById('driveFolderName').value     = p.folderName;
-    if(p.histFolderName) document.getElementById('driveHistFolderName').value = p.histFolderName;
-    if(p.prodFolderName) document.getElementById('driveProdFolderName').value = p.prodFolderName;
-    // processedIds and lastSync remain session-only (not worth persisting to DB)
-  }catch(e){ console.warn('loadDrivePrefs failed:', e.message); }
-}
-async function saveDrivePrefs(){
-  try{
-    await window.storage.set('drivePrefs', JSON.stringify({
-      folderName:     document.getElementById('driveFolderName').value.trim(),
-      histFolderName: document.getElementById('driveHistFolderName').value.trim(),
-      prodFolderName: document.getElementById('driveProdFolderName').value.trim()
-    }));
-  }catch(e){ console.warn('saveDrivePrefs failed:', e.message); }
-}
-
-/* ── GAPI initialisation ── */
-let tokenExpiryTime = null; // track when current token expires
-
-function onGapiLoad(){
-  gapi.load('client', async ()=>{
-    await gapi.client.init({});
-    gapiReady = true;
-    maybeEnableSignIn();
+  zone.addEventListener('dragover', e=>{ e.preventDefault(); zone.classList.add('drag-over'); });
+  zone.addEventListener('dragleave', ()=>zone.classList.remove('drag-over'));
+  zone.addEventListener('drop', e=>{
+    e.preventDefault(); zone.classList.remove('drag-over');
+    if(e.dataTransfer.files.length) handler([...e.dataTransfer.files]);
+  });
+  input.addEventListener('change', e=>{
+    if(e.target.files.length) handler([...e.target.files]);
+    e.target.value='';
   });
 }
-function onGisLoad(){
-  driveTokenClient = google.accounts.oauth2.initTokenClient({
-    client_id: GOOG_CLIENT_ID,
-    scope: GOOG_SCOPES,
-    callback: async(resp)=>{
-      if(resp.error){ setDriveStatus('Sign-in error: '+resp.error, 'error'); return; }
-      driveAccessToken = resp.access_token;
-      // Tokens last 1 hour — refresh 5 minutes before expiry
-      tokenExpiryTime = Date.now() + (55 * 60 * 1000);
-      gapi.client.setToken({ access_token: driveAccessToken });
-      onSignedIn();
+
+/* ── Result display helpers ── */
+function showUploadResult(resultId, type, message, stats=null){
+  const el = document.getElementById(resultId);
+  if(!el) return;
+  el.className = 'upload-result show';
+  el.innerHTML = `<div class="upload-result-bar ${type==='ok'?'':'error'}">${type==='ok'?'✓':type==='warning'?'⚠':'✗'} ${message}</div>`
+    + (stats ? `<div class="upload-result-stats">${stats.map(s=>`<div class="urs-card"><div class="urs-label">${s.label}</div><div class="urs-val">${s.val}</div></div>`).join('')}</div>` : '');
+}
+
+function showQueueStatus(queueId, files, statuses){
+  const el = document.getElementById(queueId);
+  if(!el) return;
+  if(!files||!files.length){ el.className='multi-upload-queue'; el.innerHTML=''; return; }
+  el.className = 'multi-upload-queue show';
+  el.innerHTML = files.map((f,i)=>`
+    <div class="muq-row">
+      <span class="muq-name">${f.name}</span>
+      <span class="muq-status ${statuses[i]?.type||'pending'}">${statuses[i]?.msg||'Queued'}</span>
+    </div>`).join('');
+}
+
+/* ════════════════════════════════════════
+   1. CURRENT BOTB UPLOAD
+   Overwrites daily data for all dates in file.
+   Aggregates to monthly: future months → paceEntries,
+   past months → entries (actuals).
+════════════════════════════════════════ */
+async function handleBotBCurrentUpload(files){
+  const statuses = files.map(()=>({type:'pending',msg:'Queued'}));
+  showQueueStatus('botbCurrentQueue', files, statuses);
+  document.getElementById('botbCurrentResult').className='upload-result';
+
+  let totalDays=0, totalMonths=0, errors=[];
+  const now = new Date();
+  const updatedMonths = new Set();
+
+  for(let i=0;i<files.length;i++){
+    const file = files[i];
+    statuses[i]={type:'pending',msg:'Parsing…'};
+    showQueueStatus('botbCurrentQueue', files, statuses);
+    try{
+      const text = await file.text();
+      const{dailyRows,monthlyAggs} = parseCSVContent(text);
+      if(!dailyRows.length) throw new Error('No daily rows found');
+
+      // Overwrite daily entries for all dates in file
+      dailyRows.forEach(d=>{
+        const idx=dailyEntries.findIndex(x=>x.key===d.key);
+        if(idx>=0) dailyEntries[idx]=d; else dailyEntries.push(d);
+      });
+      totalDays+=dailyRows.length;
+
+      // Route monthly aggregates: future → pace, past → actuals
+      monthlyAggs.forEach(agg=>{
+        const key=keyFor(agg.year,agg.month);
+        const isFuture=(agg.year>now.getFullYear())||(agg.year===now.getFullYear()&&agg.month>now.getMonth()+1);
+        if(isFuture){
+          const rec={key,year:agg.year,month:agg.month,asOfDate:now.toISOString().slice(0,10),revenue:agg.revenue,adr:agg.adr,occ:agg.occ};
+          const idx=paceEntries.findIndex(p=>p.key===key);
+          if(idx>=0) paceEntries[idx]=rec; else paceEntries.push(rec);
+        } else {
+          const rec={key,year:agg.year,month:agg.month,revenue:agg.revenue,adr:agg.adr,occ:agg.occ};
+          const idx=entries.findIndex(e=>e.key===key);
+          if(idx>=0) entries[idx]=rec; else entries.push(rec);
+        }
+        updatedMonths.add(key); totalMonths++;
+      });
+      statuses[i]={type:'ok',msg:`✓ ${dailyRows.length} days`};
+    }catch(e){
+      statuses[i]={type:'err',msg:`Error: ${e.message.slice(0,40)}`};
+      errors.push(`${file.name}: ${e.message}`);
     }
+    showQueueStatus('botbCurrentQueue', files, statuses);
+  }
+
+  await saveDailyEntries();
+  await saveEntries();
+  await savePaceEntries();
+  render();
+
+  if(errors.length && totalDays===0){
+    showUploadResult('botbCurrentResult','error',`Import failed: ${errors[0]}`);
+  } else {
+    showUploadResult('botbCurrentResult','ok',
+      `Imported ${files.length} file${files.length>1?'s':''} — ${totalDays} daily rows, ${totalMonths} months updated${errors.length?` (${errors.length} error${errors.length>1?'s':''})`:''}`,
+      [{label:'Daily rows',val:totalDays.toLocaleString()},{label:'Months updated',val:updatedMonths.size},{label:'Files',val:files.length},{label:'Errors',val:errors.length}]
+    );
+  }
+  renderUploadSummary();
+}
+
+/* ════════════════════════════════════════
+   2. HISTORICAL BOTB UPLOAD
+   Insert-only — never overwrites existing daily data.
+   Useful for loading prior-year actuals.
+════════════════════════════════════════ */
+async function handleBotBHistUpload(files){
+  const statuses = files.map(()=>({type:'pending',msg:'Queued'}));
+  showQueueStatus('botbHistQueue', files, statuses);
+  document.getElementById('botbHistResult').className='upload-result';
+
+  let totalDays=0, skipped=0, totalMonths=0, errors=[];
+  const updatedMonths = new Set();
+
+  for(let i=0;i<files.length;i++){
+    const file=files[i];
+    statuses[i]={type:'pending',msg:'Parsing…'};
+    showQueueStatus('botbHistQueue', files, statuses);
+    try{
+      const text=await file.text();
+      const{dailyRows,monthlyAggs}=parseCSVContent(text);
+      if(!dailyRows.length) throw new Error('No daily rows found');
+
+      // Insert-only: skip dates that already exist
+      let inserted=0, skip=0;
+      dailyRows.forEach(d=>{
+        if(dailyEntries.findIndex(x=>x.key===d.key)<0){ dailyEntries.push(d); inserted++; }
+        else skip++;
+      });
+      totalDays+=inserted; skipped+=skip;
+
+      monthlyAggs.forEach(agg=>{
+        const key=keyFor(agg.year,agg.month);
+        if(entries.findIndex(e=>e.key===key)<0){
+          entries.push({key,year:agg.year,month:agg.month,revenue:agg.revenue,adr:agg.adr,occ:agg.occ});
+          updatedMonths.add(key); totalMonths++;
+        }
+      });
+      statuses[i]={type:'ok',msg:`✓ ${inserted} new, ${skip} skipped`};
+    }catch(e){
+      statuses[i]={type:'err',msg:`Error: ${e.message.slice(0,40)}`};
+      errors.push(`${file.name}: ${e.message}`);
+    }
+    showQueueStatus('botbHistQueue', files, statuses);
+  }
+
+  await saveDailyEntries();
+  await saveEntries();
+  render();
+
+  showUploadResult('botbHistResult', errors.length&&totalDays===0?'error':'ok',
+    `${totalDays} new days inserted, ${skipped} already existed${errors.length?` (${errors.length} error${errors.length>1?'s':''})`:''}.`,
+    [{label:'New rows',val:totalDays.toLocaleString()},{label:'Skipped (exist)',val:skipped.toLocaleString()},{label:'Months added',val:updatedMonths.size},{label:'Files',val:files.length}]
+  );
+  renderUploadSummary();
+}
+
+/* ════════════════════════════════════════
+   3. PRODUCTION BY RATE UPLOAD
+   Upserts by weekKey — same week re-upload overwrites that week.
+════════════════════════════════════════ */
+async function handleProdUpload(files){
+  const statuses = files.map(()=>({type:'pending',msg:'Queued'}));
+  showQueueStatus('prodQueue', files, statuses);
+  document.getElementById('prodResult').className='upload-result';
+
+  let imported=0, errors=[];
+
+  for(let i=0;i<files.length;i++){
+    const file=files[i];
+    statuses[i]={type:'pending',msg:'Parsing…'};
+    showQueueStatus('prodQueue', files, statuses);
+    try{
+      const text=await file.text();
+      const week=parseProdCSV(text);
+      const idx=prodWeeks.findIndex(w=>w.weekKey===week.weekKey);
+      if(idx>=0) prodWeeks[idx]=week; else prodWeeks.push(week);
+      imported++;
+      statuses[i]={type:'ok',msg:`✓ Week ${week.label}`};
+    }catch(e){
+      statuses[i]={type:'err',msg:`Error: ${e.message.slice(0,40)}`};
+      errors.push(`${file.name}: ${e.message}`);
+    }
+    showQueueStatus('prodQueue', files, statuses);
+  }
+
+  await saveProdWeeks();
+  const activeTab=document.querySelector('.tab-btn.active')?.dataset.tab;
+  if(activeTab==='rate-audit') waitForChart(renderAudit);
+
+  showUploadResult('prodResult', errors.length&&imported===0?'error':'ok',
+    `${imported} week${imported!==1?'s':''} imported${errors.length?`, ${errors.length} error${errors.length>1?'s':''}`:''}.`,
+    [{label:'Weeks imported',val:imported},{label:'Total weeks on file',val:prodWeeks.length},{label:'Errors',val:errors.length},{label:'Files',val:files.length}]
+  );
+  renderUploadSummary();
+}
+
+/* ════════════════════════════════════════
+   4. STLY PACE UPLOAD (wired to existing stlyData/stlyLog)
+   Uses the same parseSTLYReport + handleSTLYFile already defined.
+   Just wires the upload-tab file inputs to those functions.
+════════════════════════════════════════ */
+document.getElementById('stlyCurrentFile2')?.addEventListener('change', async ev=>{
+  const file=ev.target.files[0]; if(!file) return;
+  ev.target.value='';
+  const statusEl=document.getElementById('stlyUploadCurStatus');
+  const resultEl=document.getElementById('stlyCurrentResult2');
+  try{
+    const text=await file.text();
+    const parsed=parseSTLYReport(text);
+    stlyData.current=parsed;
+    await saveSTLYData();
+    const today=new Date();
+    let arrYear=today.getFullYear(), arrMonth=today.getMonth()+2;
+    if(arrMonth>12){arrMonth=1;arrYear++;}
+    await addSTLYLogEntry('current', file.name, parsed, arrMonth, arrYear);
+    renderSTLYLog();
+    renderSTLYLog2();
+    renderSTLY();
+    if(statusEl) statusEl.textContent=`✓ ${Math.round(parsed.roomNights)} rm nights · ${fmtMoney(parsed.totalRevenue)}`;
+    showUploadResult('stlyCurrentResult2','ok',`Current year loaded — ${Math.round(parsed.roomNights)} room nights, ${fmtMoney(parsed.totalRevenue)}`);
+  }catch(e){
+    if(statusEl) statusEl.textContent='Error: '+e.message;
+    showUploadResult('stlyCurrentResult2','error',e.message);
+  }
+});
+
+document.getElementById('stlyPriorFile2')?.addEventListener('change', async ev=>{
+  const file=ev.target.files[0]; if(!file) return;
+  ev.target.value='';
+  const statusEl=document.getElementById('stlyUploadLyStatus');
+  const resultEl=document.getElementById('stlyPriorResult2');
+  try{
+    const text=await file.text();
+    const parsed=parseSTLYReport(text);
+    stlyData.prior=parsed;
+    await saveSTLYData();
+    const today=new Date();
+    let arrYear=today.getFullYear(), arrMonth=today.getMonth()+2;
+    if(arrMonth>12){arrMonth=1;arrYear++;}
+    await addSTLYLogEntry('prior', file.name, parsed, arrMonth, arrYear);
+    renderSTLYLog();
+    renderSTLYLog2();
+    renderSTLY();
+    if(statusEl) statusEl.textContent=`✓ ${Math.round(parsed.roomNights)} rm nights · ${fmtMoney(parsed.totalRevenue)}`;
+    showUploadResult('stlyPriorResult2','ok',`Prior year loaded — ${Math.round(parsed.roomNights)} room nights, ${fmtMoney(parsed.totalRevenue)}`);
+  }catch(e){
+    if(statusEl) statusEl.textContent='Error: '+e.message;
+    showUploadResult('stlyPriorResult2','error',e.message);
+  }
+});
+
+// Drop-zones for STLY upload tab slots
+wireDropZone('stlyCurrentZone','stlyCurrentFile2', async files=>{
+  if(!files[0]) return;
+  const ev={target:{files,value:''}};
+  document.getElementById('stlyCurrentFile2').dispatchEvent(Object.assign(new Event('change'),{target:{files:[files[0]],value:''}}));
+});
+wireDropZone('stlyPriorZone','stlyPriorFile2', async files=>{
+  if(!files[0]) return;
+  document.getElementById('stlyPriorFile2').dispatchEvent(Object.assign(new Event('change'),{target:{files:[files[0]],value:''}}));
+});
+
+/* Duplicate STLY log rendered in upload tab */
+function renderSTLYLog2(){
+  const body=document.getElementById('stlyLogBody2');
+  if(!body) return;
+  // Reuse same render logic — copy from renderSTLYLog
+  body.innerHTML='';
+  if(!stlyLog.length){
+    body.innerHTML=`<div class="stly-log-empty">No uploads yet.</div>`;
+    return;
+  }
+  const hdr=document.createElement('div');
+  hdr.className='stly-log-row hdr';
+  hdr.innerHTML=`<div>Date</div><div>File</div><div>Type</div><div>Arrival</div><div>Rm Nights</div><div>Revenue</div><div></div>`;
+  body.appendChild(hdr);
+  stlyLog.forEach(entry=>{
+    const uploaded=new Date(entry.uploadedAt);
+    const dateStr=uploaded.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+    const adr=entry.roomNights>0?fmtMoney2(entry.totalRevenue/entry.roomNights):'—';
+    const row=document.createElement('div');
+    row.className='stly-log-row';
+    row.innerHTML=`
+      <div>${dateStr}</div>
+      <div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${entry.filename||''}">${entry.filename||'—'}</div>
+      <div><span class="stly-log-tag ${entry.slot==='current'?'cy':'py'}">${entry.slot==='current'?'Current Yr':'Prior Yr'}</span></div>
+      <div>${entry.arrivalMonth?MONTHS[entry.arrivalMonth-1]+' '+(entry.arrivalYear||''):'—'}</div>
+      <div class="num">${Math.round(entry.roomNights).toLocaleString()}</div>
+      <div class="num">${fmtMoney(entry.totalRevenue)} <span style="font-size:0.65rem;color:var(--ink-soft);">ADR ${adr}</span></div>
+      <div><button class="stly-log-del" data-logid2="${entry.id}" title="Remove">✕</button></div>
+    `;
+    body.appendChild(row);
   });
-  gisReady = true;
-  maybeEnableSignIn();
-}
-function maybeEnableSignIn(){
-  if(gapiReady&&gisReady){
-    const btn=document.getElementById('driveSignInBtn');
-    btn.style.opacity='1';
-    btn.style.pointerEvents='auto';
-    silentSignIn();
-  }
-}
-
-// Attempt a silent token grant — works if user previously authorized
-function silentSignIn(){
-  if(!driveTokenClient) return;
-  try{
-    driveTokenClient.requestAccessToken({ prompt: '' });
-  }catch(e){
-    // Silent sign-in not available — user must click manually
-    console.log('Silent sign-in not available:', e);
-  }
-}
-
-// Ensure token is valid before any Drive API call — refresh if close to expiry
-async function ensureToken(){
-  if(!driveTokenClient) throw new Error('Google libraries not loaded');
-  if(!driveAccessToken || !tokenExpiryTime || Date.now() >= tokenExpiryTime){
-    // Request new token silently
-    return new Promise((resolve, reject)=>{
-      const originalCallback = driveTokenClient.callback;
-      driveTokenClient.callback = async(resp)=>{
-        driveTokenClient.callback = originalCallback;
-        if(resp.error){ reject(new Error('Token refresh failed: '+resp.error)); return; }
-        driveAccessToken = resp.access_token;
-        tokenExpiryTime = Date.now() + (55 * 60 * 1000);
-        gapi.client.setToken({ access_token: driveAccessToken });
-        resolve();
-      };
-      driveTokenClient.requestAccessToken({ prompt: '' });
+  body.querySelectorAll('[data-logid2]').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      const id=btn.dataset.logid2;
+      stlyLog=stlyLog.filter(e=>e.id!==id);
+      await saveSTLYLog();
+      try{ if(window.DB&&window._dbReady) await window.DB.deleteSTLYUpload(id); }catch(e){}
+      renderSTLYLog(); renderSTLYLog2();
     });
-  }
+  });
 }
 
-/* ── Sign in / out ── */
-document.getElementById('driveSignInBtn').style.opacity='0.4';
-document.getElementById('driveSignInBtn').style.pointerEvents='none';
-document.getElementById('driveSignInBtn').addEventListener('click',()=>{
-  if(!driveTokenClient){setDriveStatus('Google libraries still loading — try again in a moment.','error');return;}
-  driveTokenClient.requestAccessToken({prompt:'select_account'});
-});
-document.getElementById('driveSignOutBtn').addEventListener('click',()=>{
-  if(driveAccessToken)google.accounts.oauth2.revoke(driveAccessToken,()=>{});
-  driveAccessToken=null;tokenExpiryTime=null;dashboardFileId=null;pmsFolderId=null;
-  if(autoSyncIntervalId){clearInterval(autoSyncIntervalId);autoSyncIntervalId=null;}
-  if(tokenRefreshIntervalId){clearInterval(tokenRefreshIntervalId);tokenRefreshIntervalId=null;}
-  gapi.client.setToken(null);
-  document.getElementById('driveSignInBtn').style.display='inline-flex';
-  document.getElementById('driveConnectCard').style.display='flex';
-  document.getElementById('driveSignOutBtn').style.display='none';
-  document.getElementById('driveFolderRow').style.display='none';
-  setDriveStatus('Signed out of Google Drive.');
+document.getElementById('stlyLogClearAllBtn2')?.addEventListener('click', async ()=>{
+  if(confirm('Clear all STLY upload history?')){
+    stlyLog=[];
+    await saveSTLYLog();
+    try{ if(window.DB&&window._dbReady) await window.DB.clearSTLYUploads(); }catch(e){}
+    renderSTLYLog(); renderSTLYLog2();
+  }
 });
 
-function setDriveStatus(msg, type=''){
-  // Update the status bar in the Drive tab
-  const el=document.getElementById('driveStatus');
-  el.textContent=msg;
-  const bar=document.getElementById('driveStatusBar');
-  bar.className='drive-status-bar'+(type?' '+type:'');
-  // Update the compact header button
-  const btn=document.getElementById('driveHeaderBtn');
-  const label=document.getElementById('driveHeaderLabel');
-  btn.className='drive-header-btn'+(type?' '+type:'');
-  if(type==='connected'){label.textContent='Drive connected';}
-  else if(type==='error'){label.textContent='Drive error';}
-  else{label.textContent='Google Drive';}
+/* ── Wire drop zones ── */
+wireDropZone('botbCurrentZone','botbCurrentFile', handleBotBCurrentUpload);
+wireDropZone('botbHistZone',   'botbHistFile',    handleBotBHistUpload);
+wireDropZone('prodZone',       'prodFile',        handleProdUpload);
+
+/* ── Upload Summary panel ── */
+function renderUploadSummary(){
+  const grid=document.getElementById('uploadSummaryGrid');
+  const sub=document.getElementById('uploadSummaryDate');
+  if(!grid) return;
+  const now=new Date();
+  if(sub) sub.textContent=`As of ${now.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})}`;
+  const stats=[
+    {label:'Daily rows on file',   val:dailyEntries.length.toLocaleString()},
+    {label:'Monthly actuals',       val:entries.length},
+    {label:'Pace snapshots',        val:paceEntries.length},
+    {label:'Production weeks',      val:prodWeeks.length},
+  ];
+  grid.innerHTML=stats.map(s=>`
+    <div class="urs-card">
+      <div class="urs-label">${s.label}</div>
+      <div class="urs-val">${s.val}</div>
+    </div>`).join('');
 }
 
-async function onSignedIn(){
-  document.getElementById('driveSignInBtn').style.display='none';
-  document.getElementById('driveConnectCard').style.display='none';
-  document.getElementById('driveSignOutBtn').style.display='inline-flex';
-  document.getElementById('driveFolderRow').style.display='block';
-  setDriveStatus('Connected to Google Drive — loading dashboard data…','connected');
-  await loadDrivePrefs();
-  await loadDashboardDataFromDrive();
-  const hasFolder=['driveFolderName','driveHistFolderName','driveProdFolderName']
-    .some(id=>document.getElementById(id).value.trim());
-  if(hasFolder)startAutoSync();
-}
+/* ── Render summary and STLY log when upload tab is opened ── */
+const _origTabHandler = document.querySelectorAll('.tab-btn');
 
-/* ── Drive API helpers ── */
-async function driveRequest(path, opts={}){
-  await ensureToken();
-  try{
-    const resp = await gapi.client.request({ path: `https://www.googleapis.com/drive/v3/${path}`, ...opts });
-    return resp.result;
-  }catch(err){
-    // GAPI throws response objects, not standard Errors — unwrap them
-    const msg = err?.result?.error?.message
-      || err?.body && JSON.parse(err.body)?.error?.message
-      || err?.message
-      || JSON.stringify(err);
-    throw new Error(msg);
-  }
-}
-
-async function findOrCreateFile(name, parentId, mimeType='application/json'){
-  let q = `name='${name}' and trashed=false`;
-  if(parentId) q += ` and '${parentId}' in parents`;
-  const res = await driveRequest(`files?q=${encodeURIComponent(q)}&fields=files(id,name,modifiedTime)&spaces=drive`);
-  if(res.files && res.files.length) return res.files[0].id;
-  // Create new file
-  await ensureToken();
-  const meta = { name, mimeType, parents: parentId ? [parentId] : [] };
-  const boundary = '-------hotelDash';
-  const body = `--${boundary}\r\nContent-Type: application/json\r\n\r\n${JSON.stringify(meta)}\r\n--${boundary}\r\nContent-Type: ${mimeType}\r\n\r\n{}\r\n--${boundary}--`;
-  try{
-    const created = await gapi.client.request({
-      path: 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id',
-      method: 'POST',
-      headers:{ 'Content-Type': `multipart/related; boundary="${boundary}"` },
-      body
-    });
-    if(!created?.result?.id) throw new Error('File created but no ID returned');
-    return created.result.id;
-  }catch(err){
-    const msg = err?.result?.error?.message
-      || err?.body && JSON.parse(err.body)?.error?.message
-      || err?.message || JSON.stringify(err);
-    throw new Error('Could not create Drive file: ' + msg);
-  }
-}
-
-async function readFileContent(fileId,mimeType){
-  await ensureToken();
-  try{
-    const isSheets=(mimeType==='application/vnd.google-apps.spreadsheet');
-    const path=isSheets
-      ?`https://www.googleapis.com/drive/v3/files/${fileId}/export?mimeType=text%2Fcsv`
-      :`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`;
-    const resp=await gapi.client.request({path});
-    return resp.body||(typeof resp.result==='string'?resp.result:'');
-  }catch(err){
-    const msg=err?.result?.error?.message||err?.body&&JSON.parse(err.body)?.error?.message||err?.message||JSON.stringify(err);
-    throw new Error('Read failed: '+msg);
-  }
-}
-
-async function writeFileContent(fileId, content){
-  await ensureToken();
-  try{
-    await gapi.client.request({
-      path: `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`,
-      method: 'PATCH',
-      headers:{ 'Content-Type': 'application/json' },
-      body: typeof content === 'string' ? content : JSON.stringify(content)
-    });
-  }catch(err){
-    const msg = err?.result?.error?.message
-      || err?.body && JSON.parse(err.body)?.error?.message
-      || err?.message || JSON.stringify(err);
-    throw new Error('Write failed: ' + msg);
-  }
-}
-
-async function findFolderByName(name, autoCreate=true){
-  const q = `name='${name}' and mimeType='application/vnd.google-apps.folder' and trashed=false`;
-  const res = await driveRequest(`files?q=${encodeURIComponent(q)}&fields=files(id,name)&spaces=drive`);
-  if(res.files && res.files.length) return res.files[0];
-
-  if(!autoCreate) return null;
-
-  // Folder doesn't exist — create it
-  console.log(`Creating Drive folder: "${name}"`);
-  try{
-    await ensureToken();
-    const created = await gapi.client.request({
-      path: 'https://www.googleapis.com/drive/v3/files?fields=id,name',
-      method: 'POST',
-      headers:{ 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name,
-        mimeType: 'application/vnd.google-apps.folder'
-      })
-    });
-    if(!created?.result?.id) throw new Error('Folder created but no ID returned');
-    console.log(`Folder "${name}" created with ID: ${created.result.id}`);
-    return { id: created.result.id, name };
-  }catch(err){
-    const msg = err?.result?.error?.message
-      || err?.body && JSON.parse(err.body)?.error?.message
-      || err?.message || JSON.stringify(err);
-    throw new Error(`Could not create folder "${name}": ${msg}`);
-  }
-}
-
-async function listCsvFiles(folderId){
-  const sheetsType='application/vnd.google-apps.spreadsheet';
-  const q=`'${folderId}' in parents and (mimeType='text/csv' or mimeType='${sheetsType}') and trashed=false`;
-  const res=await driveRequest(`files?q=${encodeURIComponent(q)}&fields=files(id,name,mimeType,modifiedTime,createdTime)&orderBy=createdTime desc&spaces=drive`);
-  return res.files||[];
-}
-
-/* ── Load/save dashboard data JSON from Drive ── */
-async function loadDashboardDataFromDrive(){
-  try{
-    dashboardFileId = await findOrCreateFile(DASHBOARD_DATA_FILENAME, null);
-    const raw = await readFileContent(dashboardFileId);
-    let data = {};
-    try{ data = JSON.parse(raw); }catch(e){}
-
-    if(data.entries)      entries      = data.entries;
-    if(data.paceEntries)  paceEntries  = data.paceEntries;
-    if(data.dailyEntries) dailyEntries = data.dailyEntries;
-    if(data.finBudget)    finBudget    = data.finBudget;
-    if(data.finActuals)   finActuals   = data.finActuals;
-    if(data.prodWeeks)    prodWeeks    = data.prodWeeks;
-    if(data.settings && data.settings.rooms) totalRooms = data.settings.rooms;
-    if(data.processedCsvIds) processedCsvIds = new Set(data.processedCsvIds);
-
-    entries.sort((a,b)=>a.year-b.year||a.month-b.month);
-    paceEntries.sort((a,b)=>a.year-b.year||a.month-b.month);
-    finBudget.sort((a,b)=>a.year-b.year||a.month-b.month);
-    finActuals.sort((a,b)=>a.year-b.year||a.month-b.month);
-
-    if(totalRooms){
-      document.getElementById('f-rooms').value = totalRooms;
-      document.getElementById('roomsMsg').textContent = `Room-nights = ${totalRooms} rooms × days in month.`;
-    }
-
-    setDriveStatus(`Connected — ${entries.length} months of data loaded from Drive.`, 'connected');
-    render();
-  }catch(e){
-    setDriveStatus('Connected but could not load data: '+(e?.message||JSON.stringify(e)||'Unknown error'), 'error');
-    console.error('loadDashboardDataFromDrive error:', e);
-  }
-}
-
-async function saveDashboardDataToDrive(){
-  if(!dashboardFileId){ setDriveStatus('Not connected — sign in first.', 'error'); return; }
-  try{
-    const data = {
-      entries, paceEntries, dailyEntries, finBudget, finActuals, prodWeeks,
-      settings: { rooms: totalRooms },
-      processedCsvIds: [...processedCsvIds],
-      savedAt: new Date().toISOString()
-    };
-    await writeFileContent(dashboardFileId, data);
-    const ts = new Date().toLocaleString();
-    document.getElementById('driveLastSync').textContent = `Last saved: ${ts}`;
-    saveDrivePrefs();
-    setDriveStatus(`Connected — data saved to Drive at ${ts}.`, 'connected');
-  }catch(e){
-    setDriveStatus('Save failed: '+e.message, 'error');
-    console.error('saveDashboardDataToDrive error:', e);
-  }
-}
-
-/* ── Scan PMS folder for new CSVs ── */
-document.getElementById('driveScanBtn').addEventListener('click', ()=>scanDriveForCsvs(true));
-document.getElementById('driveSaveDataBtn').addEventListener('click', saveDashboardDataToDrive);
-['driveFolderName','driveHistFolderName','driveProdFolderName'].forEach(id=>{
-  document.getElementById(id).addEventListener('change', ()=>{ if(driveAccessToken) startAutoSync(); });
-});
-
-let autoSyncIntervalId = null;
-let tokenRefreshIntervalId = null;
-const SYNC_INTERVAL_MS = 24 * 60 * 60 * 1000; // 24 hours
-const CURRENT_YEAR = new Date().getFullYear();
-
-function isProdCSV(filename){return /daily.production/i.test(filename)||/production.by.rate/i.test(filename);}
-function dataContainsCurrentYear(dailyRows){return dailyRows.some(d=>d.year===CURRENT_YEAR);}
-function weekIsCurrentYear(week){return week.year===CURRENT_YEAR;}
-
-async function scanDriveForCsvs(manual=false){
-  const folderName    =document.getElementById('driveFolderName').value.trim();
-  const histFolderName=document.getElementById('driveHistFolderName').value.trim();
-  const prodFolderName=document.getElementById('driveProdFolderName').value.trim();
-  if(!folderName&&!histFolderName&&!prodFolderName){
-    if(manual)setDriveStatus('Enter at least one folder name above first.','error');return;
-  }
-  if(!driveAccessToken){if(manual)setDriveStatus('Sign in to Google Drive first.','error');return;}
-  const spinner=document.getElementById('syncSpinner');
-  spinner.style.display='inline-block';
-  setDriveStatus('Syncing with Google Drive…');
-  try{
-    saveDrivePrefs();
-    const now=new Date();
-    let totalDays=0,totalMonths=0,totalProdWeeksImported=0,updatedMonths=new Set(),errors=[];
-
-    // ── 1. Current BotB folder ──────────────────────────────────────────
-    // All unprocessed files imported. Current-year rows always overwrite.
-    // Prior-year files locked in processedCsvIds after first import.
-    if(folderName){
-      const folder=await findFolderByName(folderName);pmsFolderId=folder.id;
-      const allFiles=await listCsvFiles(pmsFolderId);
-      const toImport=allFiles.filter(f=>!isProdCSV(f.name)&&!processedCsvIds.has(f.id));
-      for(const file of toImport){
-        try{
-          const content=await readFileContent(file.id,file.mimeType);
-          const{dailyRows,monthlyAggs}=parseCSVContent(content);
-          if(!dailyRows.length){errors.push(`${file.name}: no daily rows`);continue;}
-          dailyRows.forEach(d=>{const i=dailyEntries.findIndex(x=>x.key===d.key);if(i>=0)dailyEntries[i]=d;else dailyEntries.push(d);});
-          totalDays+=dailyRows.length;
-          monthlyAggs.forEach(agg=>{
-            const key=keyFor(agg.year,agg.month);
-            const isFuture=(agg.year>now.getFullYear())||(agg.year===now.getFullYear()&&agg.month>now.getMonth()+1);
-            if(isFuture){const rec={key,year:agg.year,month:agg.month,asOfDate:now.toISOString().slice(0,10),revenue:agg.revenue,adr:agg.adr,occ:agg.occ};const i=paceEntries.findIndex(p=>p.key===key);if(i>=0)paceEntries[i]=rec;else paceEntries.push(rec);}
-            else{const rec={key,year:agg.year,month:agg.month,revenue:agg.revenue,adr:agg.adr,occ:agg.occ};const i=entries.findIndex(e=>e.key===key);if(i>=0)entries[i]=rec;else entries.push(rec);}
-            updatedMonths.add(key);totalMonths++;
-          });
-          if(!dataContainsCurrentYear(dailyRows))processedCsvIds.add(file.id);
-        }catch(e){errors.push(`${file.name}: ${e.message}`);}
-      }
-    }
-
-    // ── 2. Historical BotB folder — import-once, insert-only ───────────
-    if(histFolderName){
-      const histFolder=await findFolderByName(histFolderName);
-      const histFiles=await listCsvFiles(histFolder.id);
-      const newHistFiles=histFiles.filter(f=>!processedCsvIds.has(f.id)&&!isProdCSV(f.name));
-      for(const file of newHistFiles){
-        try{
-          const content=await readFileContent(file.id,file.mimeType);
-          const{dailyRows,monthlyAggs}=parseCSVContent(content);
-          if(!dailyRows.length){errors.push(`${file.name}: no daily rows`);continue;}
-          dailyRows.forEach(d=>{if(dailyEntries.findIndex(x=>x.key===d.key)<0)dailyEntries.push(d);});
-          totalDays+=dailyRows.length;
-          monthlyAggs.forEach(agg=>{
-            const key=keyFor(agg.year,agg.month);
-            if(entries.findIndex(e=>e.key===key)<0)entries.push({key,year:agg.year,month:agg.month,revenue:agg.revenue,adr:agg.adr,occ:agg.occ});
-            updatedMonths.add(key);totalMonths++;
-          });
-          processedCsvIds.add(file.id);
-        }catch(e){errors.push(`${file.name}: ${e.message}`);}
-      }
-      if(!newHistFiles.length&&histFiles.length)
-        setDriveStatus(`Historical BotB: ${histFiles.length} file(s) already imported.`);
-    }
-
-    // ── 3. Production by Rate — current-year always overwrites ─────────
-    if(prodFolderName){
-      const prodFolder=await findFolderByName(prodFolderName);
-      const foldersToCheck=[prodFolder.id];
-      if(pmsFolderId&&prodFolder.id!==pmsFolderId)foldersToCheck.push(pmsFolderId);
-      let prodFiles=[];
-      for(const fid of foldersToCheck){const all=await listCsvFiles(fid);prodFiles.push(...all.filter(f=>isProdCSV(f.name)));}
-      prodFiles=[...new Map(prodFiles.map(f=>[f.id,f])).values()];
-      const toImport=prodFiles.filter(f=>!processedCsvIds.has(f.id));
-      for(const file of toImport){
-        try{
-          const content=await readFileContent(file.id,file.mimeType);
-          const week=parseProdCSV(content);
-          const idx=prodWeeks.findIndex(w=>w.weekKey===week.weekKey);
-          if(idx>=0)prodWeeks[idx]=week;else prodWeeks.push(week);
-          totalProdWeeksImported++;
-          if(!weekIsCurrentYear(week))processedCsvIds.add(file.id);
-        }catch(e){errors.push(`${file.name}: ${e.message}`);}
-      }
-    }
-
-    entries.sort((a,b)=>a.year-b.year||a.month-b.month);
-    paceEntries.sort((a,b)=>a.year-b.year||a.month-b.month);
-    prodWeeks.sort((a,b)=>a.startDate.localeCompare(b.startDate));
-    await saveDashboardDataToDrive();
-    const ts=new Date().toLocaleString();
-    document.getElementById('driveLastSync').textContent=`Last sync: ${ts}`;
-    scheduleNextSync();saveDrivePrefs();
-    let statusMsg=`✓ Synced ${ts}`;
-    if(totalMonths)statusMsg+=` — ${totalMonths} month(s), ${totalDays} daily records`;
-    if(totalProdWeeksImported)statusMsg+=`${totalMonths?';':' —'} ${totalProdWeeksImported} production week(s)`;
-    statusMsg+='.';
-    if(errors.length)statusMsg+=` ⚠ ${errors.length} error(s): ${errors.join('; ')}`;
-    setDriveStatus(statusMsg,errors.length?'error':'connected');
-    const banner=document.getElementById('csvStatusBanner');
-    banner.textContent=statusMsg;banner.style.display='block';
-    setTimeout(()=>banner.style.display='none',6000);
-    render();
-  }catch(e){
-    const msg=e?.message||e?.result?.error?.message||JSON.stringify(e)||'Unknown error';
-    setDriveStatus('Sync failed: '+msg,'error');
-    console.error('scanDriveForCsvs error:',e);
-  }
-  spinner.style.display='none';
-}
-
-/* ── Auto-sync: run on sign-in, then every 24 hours ── */
-function startAutoSync(){
-  if(autoSyncIntervalId) clearInterval(autoSyncIntervalId);
-  if(tokenRefreshIntervalId) clearInterval(tokenRefreshIntervalId);
-
-  // Silently refresh the OAuth token every 50 minutes (before the 60-min expiry)
-  tokenRefreshIntervalId = setInterval(async()=>{
-    if(driveTokenClient && driveAccessToken){
-      try{
-        await ensureToken();
-        console.log('Token refreshed silently');
-      }catch(e){
-        setDriveStatus('Session expired — please sign in again.', 'error');
-        document.getElementById('driveSignInBtn').style.display = 'inline-flex';
-        document.getElementById('driveSignOutBtn').style.display = 'none';
-        driveAccessToken = null;
-        tokenExpiryTime = null;
-      }
-    }
-  }, 50 * 60 * 1000);
-
-  // Run sync immediately then every 24 hours
-  scanDriveForCsvs(false);
-  autoSyncIntervalId = setInterval(()=>{
-    if(driveAccessToken) scanDriveForCsvs(false);
-  }, SYNC_INTERVAL_MS);
-}
-
-function scheduleNextSync(){
-  const next = new Date(Date.now() + SYNC_INTERVAL_MS);
-  const opts = {hour:'2-digit', minute:'2-digit'};
-  document.getElementById('driveLastSync').textContent +=
-    `  ·  Next auto-sync: ${next.toLocaleTimeString([], opts)}`;
-}
-
-/* ── Wire GAPI/GIS to window so async script tags fire them ── */
-window.onGapiLoad = onGapiLoad;
-window.onGisLoad = onGisLoad;
-
-/* ── Override save functions to also save to Drive when connected ── */
-const _origSaveEntries = saveEntries;
-saveEntries = async function(){
-  await _origSaveEntries();
-  // Auto-persist to Drive if connected (throttled — only explicit saves or imports trigger full Drive write)
-};
-
+/* ════════════════════════════════════════
+   SUPABASE AUTH GUARD
+════════════════════════════════════════ */
 /* ════════════════════════════════════════
    SUPABASE AUTH GUARD
 ════════════════════════════════════════ */
