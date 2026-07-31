@@ -1509,7 +1509,7 @@ function renderSummary(){
   });
   renderAnalytics();
   renderForecast();
-  renderSTLY();
+  renderSTLY(); // async — fire and forget
 }
 
 /* ════════════════════════════════════════
@@ -1595,9 +1595,9 @@ function renderAnalytics(){
 
 /* ════════════════════════════════════════
    FORWARD PACE — Current BotB vs. LY Actuals
-   Uses paceEntries (populated by Current BotB import) as the
-   on-books figure. Compares against last year's actual entries.
-   Shows current month (in-progress) + next 3 future months.
+   Source: dailyEntries (from BotB upload) grouped by month.
+   Compares on-books revenue for each future month vs LY actuals.
+   Current month shown as in-progress.
 ════════════════════════════════════════ */
 function renderForecast(){
   const grid=document.getElementById('forecastGrid');
@@ -1608,7 +1608,7 @@ function renderForecast(){
   const curMonth=today.getMonth()+1;
   const curYear=today.getFullYear();
 
-  // Current month first, then next 3 — 4 cards total
+  // Current month + next 3 — 4 cards total
   const months=[];
   for(let i=0;i<4;i++){
     let y=curYear, m=curMonth+i;
@@ -1616,9 +1616,25 @@ function renderForecast(){
     months.push({year:y,month:m});
   }
 
-  const hasAnyPace=months.some(({year,month})=>paceEntries.find(p=>p.year===year&&p.month===month));
+  // Aggregate daily entries by month — this is the source of truth
+  function sumDailyMonth(year,month){
+    const rows=dailyEntries.filter(d=>d.year===year&&d.month===month);
+    if(!rows.length)return null;
+    const revenue=rows.reduce((s,d)=>s+(parseFloat(d.revenue)||0),0);
+    const rms=rows.reduce((s,d)=>s+(parseInt(d.rms)||0),0);
+    const occSum=rows.reduce((s,d)=>s+(parseFloat(d.occ)||0),0);
+    const adrSum=rows.reduce((s,d)=>s+(parseFloat(d.adr)||0),0);
+    const days=rows.length;
+    const adr=rms>0?revenue/rms:(adrSum/days);
+    const occ=occSum/days;
+    // Find latest as-of date in the daily rows
+    const asOf=rows.map(d=>d.key).sort().reverse()[0]||null;
+    return{revenue,rms,adr,occ,asOf,days};
+  }
 
-  if(!hasAnyPace){
+  const hasAnyDaily=months.some(({year,month})=>dailyEntries.some(d=>d.year===year&&d.month===month));
+
+  if(!hasAnyDaily){
     grid.innerHTML=`<div class="forecast-card" style="grid-column:span 4">
       <div class="fc-month">No on-books data</div>
       <div class="fc-label" style="color:var(--ink-soft);margin-top:6px;">Upload a Current BotB CSV in the <strong>Data Upload</strong> tab to populate forward pace. Once uploaded, on-books data for future months appears here automatically.</div>
@@ -1628,24 +1644,24 @@ function renderForecast(){
 
   months.forEach(({year,month})=>{
     const isCurrentMonth=year===curYear&&month===curMonth;
-    const pace=paceEntries.find(p=>p.year===year&&p.month===month);
+    const daily=sumDailyMonth(year,month);
     const lyActual=entries.find(e=>e.year===year-1&&e.month===month);
     const lyRev=lyActual?lyActual.revenue:null;
 
-    const obRev=pace?pace.revenue:null;
-    const obAdr=pace?pace.adr:null;
-    const obOcc=pace?pace.occ:null;
-    const asOf=pace?pace.asOfDate:null;
-    const asOfStr=asOf?`As of ${new Date(asOf+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'})}`:null;
+    const obRev=daily?daily.revenue:null;
+    const obAdr=daily?daily.adr:null;
+    const obOcc=daily?daily.occ:null;
 
-    // Current month: show on-books vs LY actual but label clearly as in-progress
-    // Future months: show pace % comparison
+    // As-of label — use the last date in the daily data
+    const asOfStr=daily?.asOf
+      ?`As of ${new Date(daily.asOf+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'})}`
+      :null;
+
     let pct=null;
     if(obRev!==null&&lyRev) pct=(obRev/lyRev)*100;
     const isOnPace=pct!==null&&pct>=100;
 
     const card=document.createElement('div');
-    // Current month gets a neutral border — it's not "behind", it's just not done
     card.className=`forecast-card ${isCurrentMonth?'':(obRev===null?'':(isOnPace?'on-pace':'below-pace'))}`;
     if(isCurrentMonth) card.style.borderColor='var(--accent)';
 
@@ -1654,10 +1670,10 @@ function renderForecast(){
       <div class="fc-projected">${obRev!==null?fmtMoney(obRev):'—'}</div>
       <div class="fc-label">On-books revenue${asOfStr?` · ${asOfStr}`:''}</div>
       ${lyRev?`
-        <div class="fc-bar-wrap"><div class="fc-bar ${isCurrentMonth?'neutral':(isOnPace?'over':'under')}" style="width:${Math.min(pct||0,100)}%;background:${isCurrentMonth?'var(--accent)':''};"></div></div>
+        <div class="fc-bar-wrap"><div class="fc-bar ${isCurrentMonth?'neutral':(isOnPace?'over':'under')}" style="width:${Math.min(pct||0,100)}%;${isCurrentMonth?'background:var(--accent);':''}"></div></div>
         <div class="fc-pct ${isCurrentMonth?'neutral':(isOnPace?'over':'under')}">${pct!==null?`${pct.toFixed(1)}% of LY ${fmtMoney(lyRev)}`:''}</div>
       `:`<div class="fc-label" style="margin-top:8px;color:var(--ink-xsoft);">No LY actuals to compare</div>`}
-      ${obAdr!==null?`<div class="fc-label" style="margin-top:6px;">ADR ${fmtMoney2(obAdr)} · Occ ${fmtPct(obOcc||0)}</div>`:''}
+      ${obAdr!==null&&obAdr>0?`<div class="fc-label" style="margin-top:6px;">ADR ${fmtMoney2(obAdr)} · Occ ${obOcc>0?fmtPct(obOcc):'—'}</div>`:''}
     `;
     grid.appendChild(card);
   });
@@ -1826,8 +1842,8 @@ function renderSTLYLog(){
   });
 }
 
-function renderSTLY(){
-  loadSTLYData(); // always load latest from storage
+async function renderSTLY(){
+  await loadSTLYData(); // must await — reads from Supabase async
 
   const titleEl=document.getElementById('stlyTitle');
   const subEl=document.getElementById('stlySub');
@@ -1962,7 +1978,7 @@ function handleSTLYFile(file, slot){
       // Log the upload
       addSTLYLogEntry(slot, file.name, parsed, arrMonth, arrYear);
       renderSTLYLog();
-      renderSTLY();
+      renderSTLY(); // async — fire and forget
     }catch(e){
       const statusId=slot==='current'?'stlyCurStatus':'stlyLyStatus';
       const el=document.getElementById(statusId);
@@ -1983,7 +1999,7 @@ document.getElementById('stlyLyFile')?.addEventListener('change',ev=>{
 document.getElementById('stlyClearBtn')?.addEventListener('click', async ()=>{
   stlyData={current:null,prior:null};
   await saveSTLYData();
-  renderSTLY();
+  renderSTLY(); // async — fire and forget
 });
 document.getElementById('stlyLogClearAllBtn')?.addEventListener('click', async ()=>{
   if(confirm('Clear all STLY upload history? This does not remove the current loaded data — just the log.')){
@@ -3262,7 +3278,7 @@ document.getElementById('stlyCurrentFile2')?.addEventListener('change', async ev
     await addSTLYLogEntry('current', file.name, parsed, arrMonth, arrYear);
     renderSTLYLog();
     renderSTLYLog2();
-    renderSTLY();
+    renderSTLY(); // async — fire and forget
     if(statusEl) statusEl.textContent=`✓ ${Math.round(parsed.roomNights)} rm nights · ${fmtMoney(parsed.totalRevenue)}`;
     showUploadResult('stlyCurrentResult2','ok',`Current year loaded — ${Math.round(parsed.roomNights)} room nights, ${fmtMoney(parsed.totalRevenue)}`);
   }catch(e){
@@ -3287,7 +3303,7 @@ document.getElementById('stlyPriorFile2')?.addEventListener('change', async ev=>
     await addSTLYLogEntry('prior', file.name, parsed, arrMonth, arrYear);
     renderSTLYLog();
     renderSTLYLog2();
-    renderSTLY();
+    renderSTLY(); // async — fire and forget
     if(statusEl) statusEl.textContent=`✓ ${Math.round(parsed.roomNights)} rm nights · ${fmtMoney(parsed.totalRevenue)}`;
     showUploadResult('stlyPriorResult2','ok',`Prior year loaded — ${Math.round(parsed.roomNights)} room nights, ${fmtMoney(parsed.totalRevenue)}`);
   }catch(e){
