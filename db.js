@@ -734,67 +734,33 @@
       },
 
       /* Invite a user by email to the active property.
-         Flow:
-         1. Write a pending_invites row (tracked regardless of user state)
-         2. If user already exists → add to property_members immediately
-         3. If new user → send OTP magic link; trigger adds them on sign-in */
+         Uses Supabase admin invite — sends a magic link email.
+         The invited user clicks the link, sets a password, and
+         is automatically added to property_members on first login
+         via the handle_new_member trigger (see SQL migration). */
       async inviteUser(email, role = 'viewer') {
-        const pid  = await getPropertyId();
+        const pid = await getPropertyId();
         const user = (await sb.auth.getSession()).data.session?.user;
         if (!user) throw new Error('Not authenticated');
 
-        // Always write a pending invite record first
-        const { error: piErr } = await sb
-          .from('pending_invites')
+        // Send invite via Supabase Auth
+        const { data: invite, error: inviteErr } = await sb.auth.admin.inviteUserByEmail(email, {
+          data: { invited_to_property: pid, role }
+        });
+        if (inviteErr) throw new Error('Invite failed: ' + inviteErr.message);
+
+        // Pre-create the membership row so it's ready when they accept
+        const { error: memberErr } = await sb
+          .from('property_members')
           .upsert({
             property_id: pid,
-            email:       email.toLowerCase().trim(),
+            user_id:     invite.user.id,
             role,
-            invited_by:  user.id,
-            accepted_at: null
-          }, { onConflict: 'property_id,email' });
-        if (piErr) throw new Error('Could not record invite: ' + piErr.message);
+            invited_by:  user.id
+          }, { onConflict: 'property_id,user_id' });
+        if (memberErr) throw new Error('Member insert failed: ' + memberErr.message);
 
-        // Check if user already has an account (via member_emails view)
-        try {
-          const { data: existing } = await sb
-            .from('member_emails')
-            .select('id, email')
-            .eq('email', email.toLowerCase().trim())
-            .maybeSingle();
-
-          if (existing?.id) {
-            // User exists — add to property_members immediately
-            await sb.from('property_members').upsert({
-              property_id: pid,
-              user_id:     existing.id,
-              role,
-              invited_by:  user.id
-            }, { onConflict: 'property_id,user_id' });
-
-            // Mark invite as accepted
-            await sb.from('pending_invites')
-              .update({ accepted_at: new Date().toISOString() })
-              .eq('property_id', pid)
-              .eq('email', email.toLowerCase().trim());
-
-            return { email, role, status: 'added' };
-          }
-        } catch(e) {
-          // member_emails view may not exist yet — continue to OTP
-        }
-
-        // New user — send magic link sign-in email
-        const { error: otpErr } = await sb.auth.signInWithOtp({
-          email: email.toLowerCase().trim(),
-          options: {
-            shouldCreateUser: true,
-            emailRedirectTo:  `${location.origin}/index.html`
-          }
-        });
-        if (otpErr) throw new Error('Invite email failed: ' + otpErr.message);
-
-        return { email, role, status: 'invited' };
+        return invite;
       },
 
       /* Update a member's role */
