@@ -82,13 +82,38 @@
     }
 
     async function upsertRows(tableName, rows) {
-      if (!rows || !rows.length) return;
+      if (!rows) return;
       const pid = await getPropertyId();
-      const payload = rows.map(r => ({ ...r, property_id: pid }));
-      const { error } = await sb
+
+      // Get current keys in Supabase for this property
+      const { data: existing, error: fetchErr } = await sb
         .from(tableName)
-        .upsert(payload, { onConflict: 'property_id,key' });
-      if (error) throw new Error(`Upsert ${tableName} failed: ` + error.message);
+        .select('key')
+        .eq('property_id', pid);
+      if (fetchErr) throw new Error(`Fetch keys ${tableName} failed: ` + fetchErr.message);
+
+      const existingKeys = new Set((existing || []).map(r => r.key));
+      const newKeys      = new Set(rows.map(r => r.key));
+
+      // Delete rows that exist in DB but are no longer in the array
+      const toDelete = [...existingKeys].filter(k => !newKeys.has(k));
+      if (toDelete.length) {
+        const { error: delErr } = await sb
+          .from(tableName)
+          .delete()
+          .eq('property_id', pid)
+          .in('key', toDelete);
+        if (delErr) throw new Error(`Delete stale ${tableName} rows failed: ` + delErr.message);
+      }
+
+      // Upsert all current rows
+      if (rows.length) {
+        const payload = rows.map(r => ({ ...r, property_id: pid }));
+        const { error: upsertErr } = await sb
+          .from(tableName)
+          .upsert(payload, { onConflict: 'property_id,key' });
+        if (upsertErr) throw new Error(`Upsert ${tableName} failed: ` + upsertErr.message);
+      }
     }
 
     async function deleteRow(tableName, key) {
@@ -113,7 +138,8 @@
         room_rev:   r.roomRev   ?? 0,
         room_fees:  r.roomFees  ?? 0,
         restaurant: r.restaurant ?? 0,
-        parking:    r.parking   ?? 0
+        parking:    r.parking   ?? 0,
+        misc:       r.misc      ?? 0
       };
     }
     function fromFinBudgetRow(r) {
@@ -122,7 +148,8 @@
         roomRev:    r.room_rev   ?? 0,
         roomFees:   r.room_fees  ?? 0,
         restaurant: r.restaurant ?? 0,
-        parking:    r.parking    ?? 0
+        parking:    r.parking    ?? 0,
+        misc:       r.misc       ?? 0
       };
     }
     function toFinActualsRow(r) {
@@ -130,7 +157,8 @@
         key: r.key, year: r.year, month: r.month,
         room_fees:  r.roomFees  ?? 0,
         restaurant: r.restaurant ?? 0,
-        parking:    r.parking   ?? 0
+        parking:    r.parking   ?? 0,
+        misc:       r.misc      ?? 0
       };
     }
     function fromFinActualsRow(r) {
@@ -138,7 +166,8 @@
         key: r.key, year: r.year, month: r.month,
         roomFees:   r.room_fees  ?? 0,
         restaurant: r.restaurant ?? 0,
-        parking:    r.parking    ?? 0
+        parking:    r.parking    ?? 0,
+        misc:       r.misc       ?? 0
       };
     }
     function toProdWeekRow(r) {
@@ -290,9 +319,42 @@
               await upsertRows('pace_entries', parsed);
               return { key, value };
 
-            case 'daily':
-              await upsertRows('daily_entries', parsed);
+            case 'daily': {
+              // daily_entries: sync deletions then upsert
+              // Must include day column explicitly
+              const pid = await getPropertyId();
+              const parsed = typeof value === 'string' ? JSON.parse(value) : value;
+
+              // Get existing keys
+              const { data: existing } = await sb
+                .from('daily_entries').select('key').eq('property_id', pid);
+              const existingKeys = new Set((existing||[]).map(r=>r.key));
+              const newKeys = new Set(parsed.map(r=>r.key));
+              const toDelete = [...existingKeys].filter(k=>!newKeys.has(k));
+
+              if (toDelete.length) {
+                await sb.from('daily_entries').delete()
+                  .eq('property_id', pid).in('key', toDelete);
+              }
+              if (parsed.length) {
+                const payload = parsed.map(r => ({
+                  key:         r.key,
+                  year:        r.year,
+                  month:       r.month,
+                  day:         r.day,
+                  revenue:     r.revenue,
+                  adr:         r.adr,
+                  occ:         r.occ,
+                  rms:         r.rms || null,
+                  source:      r.source || 'upload',
+                  property_id: pid
+                }));
+                const { error } = await sb.from('daily_entries')
+                  .upsert(payload, { onConflict: 'property_id,key' });
+                if (error) throw new Error('Upsert daily_entries failed: ' + error.message);
+              }
               return { key, value };
+            }
 
             case 'settings': {
               const pid = await getPropertyId();
@@ -318,15 +380,22 @@
 
             case 'prodWeeks': {
               const pid = await getPropertyId();
-              if (!parsed.length) return { key, value };
-              const payload = parsed.map(r => ({
-                ...toProdWeekRow(r),
-                property_id: pid
-              }));
-              const { error } = await sb
-                .from('prod_weeks')
-                .upsert(payload, { onConflict: 'property_id,week_key' });
-              if (error) throw error;
+              // Sync deletions by week_key, then upsert remaining
+              const { data: existingWK } = await sb
+                .from('prod_weeks').select('week_key').eq('property_id', pid);
+              const existingSet = new Set((existingWK||[]).map(r=>r.week_key));
+              const newSet = new Set(parsed.map(r=>r.weekKey||r.week_key));
+              const toDelete = [...existingSet].filter(k=>!newSet.has(k));
+              if (toDelete.length) {
+                await sb.from('prod_weeks').delete()
+                  .eq('property_id', pid).in('week_key', toDelete);
+              }
+              if (parsed.length) {
+                const payload = parsed.map(r => ({ ...toProdWeekRow(r), property_id: pid }));
+                const { error } = await sb.from('prod_weeks')
+                  .upsert(payload, { onConflict: 'property_id,week_key' });
+                if (error) throw error;
+              }
               return { key, value };
             }
 
@@ -591,6 +660,16 @@
 
     console.log('[db.js] Supabase storage layer ready.');
     window._dbReady = true;
+
+    // Clear stale localStorage hd_ cache so it never serves as a fallback
+    // once Supabase is confirmed working. Data lives in Supabase now.
+    try {
+      const keysToRemove = Object.keys(localStorage).filter(k => k.startsWith('hd_') &&
+        !['hd_stly','hd_stly_log','hd_db_migrated_drive'].includes(k));
+      keysToRemove.forEach(k => localStorage.removeItem(k));
+      if (keysToRemove.length) console.log(`[db.js] Cleared ${keysToRemove.length} stale localStorage keys.`);
+    } catch(e) {}
+
     document.dispatchEvent(new Event('db:ready'));
   });
 
