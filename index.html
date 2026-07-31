@@ -2017,6 +2017,60 @@ document.getElementById('stlyLogClearAllBtn')?.addEventListener('click', async (
    DASHBOARD — booking pace
 ════════════════════════════════════════ */
 function pacePct(cur,prior){if(!prior||!isFinite(prior))return null;return(cur/prior)*100;}
+/* ════════════════════════════════════════
+   ON-BOOKS DATA HELPER
+   Source of truth for forward-looking pace:
+   1. Daily entries grouped by month (from BotB upload) — preferred
+   2. Manual pace snapshot (paceEntries) — fallback if no daily data
+   Returns { revenue, adr, occ, rms, asOfDate, source } or null
+════════════════════════════════════════ */
+function getMonthlyOnBooks(year, month){
+  // Try daily entries first
+  const rows = dailyEntries.filter(d => d.year === year && d.month === month);
+  if(rows.length){
+    const revenue  = rows.reduce((s,d) => s + (parseFloat(d.revenue)||0), 0);
+    const rms      = rows.reduce((s,d) => s + (parseInt(d.rms)||0), 0);
+    const occSum   = rows.reduce((s,d) => s + (parseFloat(d.occ)||0), 0);
+    const adrSum   = rows.reduce((s,d) => s + (parseFloat(d.adr)||0), 0);
+    const days     = rows.length;
+    const adr      = rms > 0 ? revenue / rms : (adrSum / days);
+    const occ      = occSum / days;
+    const asOfDate = rows.map(d => d.key).sort().reverse()[0] || null;
+    return { revenue, adr, occ, rms, asOfDate, source: 'botb' };
+  }
+  // Fall back to manual pace snapshot
+  const pace = paceEntries.find(p => p.year === year && p.month === month);
+  if(pace){
+    return {
+      revenue:   pace.revenue,
+      adr:       pace.adr,
+      occ:       pace.occ,
+      rms:       null,
+      asOfDate:  pace.asOfDate || null,
+      source:    'manual'
+    };
+  }
+  return null;
+}
+
+/* ── Build a combined list of all months that have on-books data ── */
+function getAllOnBooksMonths(){
+  const monthSet = new Map(); // key → {year,month}
+
+  // From daily entries
+  dailyEntries.forEach(d => {
+    const k = keyFor(d.year, d.month);
+    if(!monthSet.has(k)) monthSet.set(k, {year:d.year, month:d.month});
+  });
+  // From manual pace snapshots
+  paceEntries.forEach(p => {
+    const k = keyFor(p.year, p.month);
+    if(!monthSet.has(k)) monthSet.set(k, {year:p.year, month:p.month});
+  });
+
+  return [...monthSet.values()].sort((a,b) => a.year-b.year || a.month-b.month);
+}
+
 function paceCellHTML(pct){
   if(pct===null)return`<span class="delta flat">no LY data</span>`;
   const cls=Math.abs(pct-100)<0.5?'flat':(pct>=100?'pos':'neg');
@@ -2025,26 +2079,58 @@ function paceCellHTML(pct){
 function renderPace(){
   const body=document.getElementById('paceBody');
   body.innerHTML='';
-  document.getElementById('paceCount').textContent=paceEntries.length?`${paceEntries.length} month${paceEntries.length===1?'':'s'} tracked`:'';
-  document.getElementById('paceEmptyState').style.display=paceEntries.length?'none':'block';
-  [...paceEntries].sort((a,b)=>a.year-b.year||a.month-b.month).forEach(p=>{
-    const ly=entries.find(e=>e.year===p.year-1&&e.month===p.month)||null;
-    const lyRev=ly?ly.revenue:null;
-    const revPace=pacePct(p.revenue,lyRev);
-    const arn=availableRoomNights(p.year,p.month);
-    const obRevpar=arn?p.revenue/arn:null;
-    const lyRevpar=ly?revparForEntry(ly):null;
-    const rpPace=obRevpar!==null?pacePct(obRevpar,lyRevpar):null;
-    const tr=document.createElement('tr');
-    tr.innerHTML=`<td>${MONTHS[p.month-1]} ${p.year}</td><td>${p.asOfDate||'—'}</td>
-      <td>${fmtMoney(p.revenue)}</td><td>${lyRev===null?'—':fmtMoney(lyRev)}</td><td>${paceCellHTML(revPace)}</td>
-      <td>${obRevpar===null?'—':fmtMoney2(obRevpar)}</td><td>${lyRevpar===null?'—':fmtMoney2(lyRevpar)}</td><td>${paceCellHTML(rpPace)}</td>
+
+  // Get all months with on-books data (BotB daily + manual snapshots)
+  const allMonths = getAllOnBooksMonths();
+
+  // Only show future months (current month and forward) in pace table
+  const today = new Date();
+  const curYear = today.getFullYear(), curMonth = today.getMonth()+1;
+  const paceMonths = allMonths.filter(({year,month}) =>
+    year > curYear || (year === curYear && month >= curMonth)
+  );
+
+  document.getElementById('paceCount').textContent = paceMonths.length
+    ? `${paceMonths.length} month${paceMonths.length===1?'':'s'} on books`
+    : '';
+  document.getElementById('paceEmptyState').style.display = paceMonths.length ? 'none' : 'block';
+
+  paceMonths.forEach(({year,month}) => {
+    const ob  = getMonthlyOnBooks(year, month);
+    if(!ob) return;
+    const ly  = entries.find(e => e.year===year-1 && e.month===month) || null;
+    const lyRev = ly ? ly.revenue : null;
+    const revPace = pacePct(ob.revenue, lyRev);
+    const arn = availableRoomNights(year, month);
+    const obRevpar = arn ? ob.revenue / arn : null;
+    const lyRevpar = ly ? revparForEntry(ly) : null;
+    const rpPace = obRevpar !== null ? pacePct(obRevpar, lyRevpar) : null;
+    const asOfLabel = ob.asOfDate
+      ? new Date(ob.asOfDate+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'})
+      : '—';
+    const sourceBadge = ob.source==='botb'
+      ? `<span style="font-size:0.6rem;background:var(--accent-soft);color:var(--accent);padding:1px 5px;border-radius:3px;font-weight:700;">BotB</span>`
+      : `<span style="font-size:0.6rem;background:var(--paper);color:var(--ink-soft);padding:1px 5px;border-radius:3px;font-weight:700;">Manual</span>`;
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${MONTHS[month-1]} ${year} ${sourceBadge}</td>
+      <td>${asOfLabel}</td>
+      <td class="num">${fmtMoney(ob.revenue)}</td>
+      <td class="num">${lyRev===null?'—':fmtMoney(lyRev)}</td>
+      <td>${paceCellHTML(revPace)}</td>
+      <td class="num">${obRevpar===null?'—':fmtMoney2(obRevpar)}</td>
+      <td class="num">${lyRevpar===null?'—':fmtMoney2(lyRevpar)}</td>
+      <td>${paceCellHTML(rpPace)}</td>
       <td class="row-actions">
-        <button class="btn-ghost" data-pedit="${p.key}">Edit</button>
-        <button class="btn-ghost" data-pdel="${p.key}">Del</button>
+        ${ob.source==='manual'?`
+          <button class="btn-ghost" data-pedit="${keyFor(year,month)}">Edit</button>
+          <button class="btn-ghost" data-pdel="${keyFor(year,month)}">Del</button>
+        `:'<span style="font-size:0.7rem;color:var(--ink-xsoft);">from BotB</span>'}
       </td>`;
     body.appendChild(tr);
   });
+
   body.querySelectorAll('[data-pedit]').forEach(b=>b.addEventListener('click',()=>startPaceEdit(b.dataset.pedit)));
   body.querySelectorAll('[data-pdel]').forEach(b=>b.addEventListener('click',()=>deletePaceEntry(b.dataset.pdel)));
   renderPaceChart();
@@ -2054,19 +2140,40 @@ function renderPaceChart(){
   const canvas=document.getElementById('chartPace');
   if(!canvas)return;
   const existing=Chart.getChart(canvas);if(existing)existing.destroy();
-  const sorted=[...paceEntries].sort((a,b)=>a.year-b.year||a.month-b.month);
-  const labels=sorted.map(p=>`${MONTHS[p.month-1].slice(0,3)} ${p.year}`);
-  const vals=sorted.map(p=>{const ly=entries.find(e=>e.year===p.year-1&&e.month===p.month);return pacePct(p.revenue,ly?ly.revenue:null);});
-  const colors=vals.map(v=>v===null?'#D9D2C2':(v>=100?'#2F6B4F':'#B4483C'));
+
+  // Show all months that have on-books data AND a LY actual to compare
+  const today=new Date();
+  const curYear=today.getFullYear(), curMonth=today.getMonth()+1;
+  const allMonths=getAllOnBooksMonths().filter(({year,month})=>
+    year>curYear||(year===curYear&&month>=curMonth)
+  );
+
+  const labels=[], vals=[], colors=[];
+  allMonths.forEach(({year,month})=>{
+    const ob=getMonthlyOnBooks(year,month);
+    if(!ob)return;
+    const ly=entries.find(e=>e.year===year-1&&e.month===month);
+    const pct=pacePct(ob.revenue, ly?ly.revenue:null);
+    labels.push(`${MONTHS[month-1].slice(0,3)} ${year}`);
+    vals.push(pct);
+    colors.push(pct===null?'#A8B5C2':(pct>=100?'#27AE60':'#E74C3C'));
+  });
+
+  if(!labels.length){
+    canvas.parentElement.querySelector('.fx') &&
+      (canvas.parentElement.querySelector('.fx').textContent='No on-books data to chart yet — upload a Current BotB CSV.');
+    return;
+  }
+
   charts.pace=new Chart(canvas,{
     type:'line',
     data:{labels,datasets:[
       {
         label:'Revenue pace %',
         data:vals.map(v=>v===null?null:v),
-        borderColor:'#A9793C',
-        backgroundColor:'transparent',
-        fill:false,
+        borderColor:'#2E86C1',
+        backgroundColor:'rgba(46,134,193,0.08)',
+        fill:true,
         tension:0.3,
         pointRadius:5,
         pointHoverRadius:7,
@@ -2078,7 +2185,7 @@ function renderPaceChart(){
       {
         label:'On pace (100%)',
         data:labels.map(()=>100),
-        borderColor:'#1B2430',
+        borderColor:'#1A2332',
         backgroundColor:'transparent',
         fill:false,
         borderDash:[5,4],
@@ -2238,31 +2345,35 @@ function renderCalendar(){
 function renderCalMonthlySummary(){
   const wrap=document.getElementById('calMonthlySummary');wrap.innerHTML='';
 
-  // Pull current month data — try actuals first, fall back to pace
+  // Use getMonthlyOnBooks — reads BotB daily data first, falls back to manual pace
+  const ob=getMonthlyOnBooks(calYear,calMonth);
   const curActual=entries.find(e=>e.year===calYear&&e.month===calMonth);
-  const curPace=paceEntries.find(p=>p.year===calYear&&p.month===calMonth);
-  const cur=curActual||curPace||null;
-  const isPace=!curActual&&!!curPace;
+  // Prefer actuals if available, otherwise use on-books data
+  const cur=curActual||ob||null;
+  const isOnBooks=!curActual&&!!ob;
+  const isPace=isOnBooks&&ob.source==='manual';
+  const isBotB=isOnBooks&&ob.source==='botb';
 
-  // Prior year — actuals only for comparison
+  // Prior year — actuals only
   const ly=entries.find(e=>e.year===calYear-1&&e.month===calMonth);
   const curRP=cur&&totalRooms&&cur.revenue?cur.revenue/availableRoomNights(calYear,calMonth):null;
   const lyRP=ly&&totalRooms&&ly.revenue?ly.revenue/availableRoomNights(calYear-1,calMonth):null;
 
-  const paceBadge=isPace
-    ?`<span style="font-size:0.62rem;text-transform:uppercase;letter-spacing:0.05em;background:var(--accent-soft);border:1px solid var(--blue-soft);color:var(--accent);padding:2px 7px;border-radius:4px;margin-bottom:4px;display:inline-block;">On-books pace</span>`
+  const paceBadge=isBotB
+    ?`<span style="font-size:0.62rem;text-transform:uppercase;letter-spacing:0.05em;background:var(--accent-soft);border:1px solid var(--blue-soft);color:var(--accent);padding:2px 7px;border-radius:4px;margin-bottom:4px;display:inline-block;">On-books (BotB)</span>`
+    :isPace
+    ?`<span style="font-size:0.62rem;text-transform:uppercase;letter-spacing:0.05em;background:var(--accent-soft);border:1px solid var(--blue-soft);color:var(--accent);padding:2px 7px;border-radius:4px;margin-bottom:4px;display:inline-block;">On-books (manual)</span>`
     :'';
 
-  // Only show metrics if they have valid non-zero values
   const hasRev=cur&&cur.revenue>0;
   const hasAdr=cur&&cur.adr>0;
   const hasOcc=cur&&cur.occ>0;
 
   [
-    {label:'Revenue',   cur:hasRev?fmtMoney(cur.revenue):null,  ly:ly?fmtMoney(ly.revenue):null,   raw:[hasRev?cur.revenue:null,  ly?.revenue]},
-    {label:'ADR',       cur:hasAdr?fmtMoney2(cur.adr):null,     ly:ly?fmtMoney2(ly.adr):null,      raw:[hasAdr?cur.adr:null,      ly?.adr]},
-    {label:'Occupancy', cur:hasOcc?fmtPct(cur.occ):null,        ly:ly?fmtPct(ly.occ):null,         raw:[hasOcc?cur.occ:null,      ly?.occ]},
-    {label:'RevPAR',    cur:curRP!==null?fmtMoney2(curRP):null, ly:lyRP!==null?fmtMoney2(lyRP):null,raw:[curRP,lyRP]},
+    {label:'Revenue',   cur:hasRev?fmtMoney(cur.revenue):null,  ly:ly?fmtMoney(ly.revenue):null,    raw:[hasRev?cur.revenue:null, ly?.revenue]},
+    {label:'ADR',       cur:hasAdr?fmtMoney2(cur.adr):null,     ly:ly?fmtMoney2(ly.adr):null,       raw:[hasAdr?cur.adr:null,     ly?.adr]},
+    {label:'Occupancy', cur:hasOcc?fmtPct(cur.occ):null,        ly:ly?fmtPct(ly.occ):null,          raw:[hasOcc?cur.occ:null,     ly?.occ]},
+    {label:'RevPAR',    cur:curRP!==null?fmtMoney2(curRP):null, ly:lyRP!==null?fmtMoney2(lyRP):null, raw:[curRP,lyRP]},
   ].forEach(m=>{
     const div=document.createElement('div');div.className='cal-ms-card';
     const pctHtml=m.raw[0]!=null&&m.raw[1]!=null&&isFinite(m.raw[0])&&isFinite(m.raw[1])&&m.raw[1]!==0?deltaHTML(m.raw[0],m.raw[1]):'';
@@ -2787,11 +2898,12 @@ const FIN_CATS=[
 const FIN_YEAR = new Date().getFullYear(); // financials tracks current year only
 
 function getRoomRev(year,month){
-  if(year !== FIN_YEAR) return{value:null,source:null}; // only pull current year
+  if(year !== FIN_YEAR) return{value:null,source:null};
   const actual=entries.find(e=>e.year===year&&e.month===month);
   if(actual)return{value:actual.revenue,source:'actual'};
-  const pace=paceEntries.find(p=>p.year===year&&p.month===month);
-  if(pace)return{value:pace.revenue,source:'pace'};
+  // Use getMonthlyOnBooks — reads BotB daily data first, falls back to manual pace
+  const ob=getMonthlyOnBooks(year,month);
+  if(ob&&ob.revenue>0)return{value:ob.revenue,source:ob.source==='botb'?'botb':'pace'};
   return{value:null,source:null};
 }
 
@@ -2831,20 +2943,27 @@ document.querySelectorAll('.fin-section-tab').forEach(btn=>{
 
 function prefillActualsForm(){
   if(document.getElementById('fa-year').value)return;
-  const currentYearMonths=[...entries,...paceEntries]
-    .filter(e=>e.year===FIN_YEAR)
-    .map(e=>({year:e.year,month:e.month,key:keyFor(e.year,e.month)}))
+  // Get all current-year months from entries + on-books data
+  const onBooksMonths=getAllOnBooksMonths().filter(m=>m.year===FIN_YEAR);
+  const entryMonths=entries.filter(e=>e.year===FIN_YEAR).map(e=>({year:e.year,month:e.month}));
+  const allMonths=[...entryMonths,...onBooksMonths]
+    .map(m=>({...m,key:keyFor(m.year,m.month)}))
     .sort((a,b)=>b.month-a.month);
-  const needsFees=currentYearMonths.find(m=>!finActuals.find(a=>a.key===m.key));
+  const needsFees=allMonths.find(m=>!finActuals.find(a=>a.key===m.key));
   if(needsFees){document.getElementById('fa-year').value=needsFees.year;document.getElementById('fa-month').value=needsFees.month;}
 }
 
 /* Current year only — financials is a yearly budget tracker */
 function getAllFinKeys(){
+  // Get all months from daily entries for current year (BotB source)
+  const dailyMonths=[...new Set(
+    dailyEntries.filter(d=>d.year===FIN_YEAR).map(d=>keyFor(d.year,d.month))
+  )];
   return[...new Set([
     ...finBudget.filter(b=>b.year===FIN_YEAR).map(b=>b.key),
     ...finActuals.filter(a=>a.year===FIN_YEAR).map(a=>a.key),
     ...entries.filter(e=>e.year===FIN_YEAR).map(e=>keyFor(e.year,e.month)),
+    ...dailyMonths,
     ...paceEntries.filter(p=>p.year===FIN_YEAR).map(p=>keyFor(p.year,p.month))
   ])].sort();
 }
@@ -2905,7 +3024,7 @@ function renderFinTracker(){
     const merged=getMergedActual(yr,mo);
     if(b)FIN_CATS.forEach(c=>{sumB[c.key]+=(b[c.key]||0);});
     sumA.roomRev+=(merged.roomRev||0);sumA.roomFees+=merged.roomFees;sumA.restaurant+=merged.restaurant;sumA.parking+=merged.parking;sumA.misc+=(merged.misc||0);
-    const rrLabel=merged.roomRev!==null?`${fmtMoney(merged.roomRev)}<span style="font-size:0.65rem;color:var(--accent);margin-left:4px;">${merged.roomRevSource==='pace'?'pace':'✓'}</span>`:'—';
+    const rrLabel=merged.roomRev!==null?`${fmtMoney(merged.roomRev)}<span style="font-size:0.65rem;color:var(--accent);margin-left:4px;">${merged.roomRevSource==='botb'?'BotB':merged.roomRevSource==='pace'?'pace':'✓'}</span>`:'—';
     const bTotVal=b?finTotal(b):null,aTotVal=finTotal(merged);
     const tr=document.createElement('tr');
     let cells=`<td>${MONTHS[mo-1]} ${yr}</td>`;
@@ -2963,7 +3082,7 @@ function renderFinActualsTable(){
     const merged=getMergedActual(yr,mo);
     const hasFees=merged.roomFees||merged.restaurant||merged.parking||merged.misc;
     const rrLabel=merged.roomRev!==null
-      ?`${fmtMoney(merged.roomRev)}<span style="font-size:0.65rem;color:var(--accent);margin-left:5px;">${merged.roomRevSource==='pace'?'pace':'from history'}</span>`
+      ?`${fmtMoney(merged.roomRev)}<span style="font-size:0.65rem;color:var(--accent);margin-left:5px;">${merged.roomRevSource==='botb'?'BotB':merged.roomRevSource==='pace'?'pace':'from history'}</span>`
       :`<span style="color:var(--ink-soft)">—</span>`;
     const dash='<span style="color:var(--ink-soft)">—</span>';
     const tr=document.createElement('tr');
