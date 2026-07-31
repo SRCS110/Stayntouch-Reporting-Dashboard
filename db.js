@@ -72,13 +72,28 @@
 
     async function loadTable(tableName) {
       const pid = await getPropertyId();
-      const { data, error } = await sb
-        .from(tableName)
-        .select('*')
-        .eq('property_id', pid)
-        .order('year', { ascending: true });
-      if (error) throw new Error(`Load ${tableName} failed: ` + error.message);
-      return data || [];
+      const PAGE = 1000;
+      let allRows = [];
+      let from = 0;
+
+      while (true) {
+        const { data, error } = await sb
+          .from(tableName)
+          .select('*')
+          .eq('property_id', pid)
+          .order('year', { ascending: true })
+          .range(from, from + PAGE - 1);
+
+        if (error) throw new Error(`Load ${tableName} failed: ` + error.message);
+        const rows = data || [];
+        allRows = allRows.concat(rows);
+
+        // If we got a full page there may be more — keep going
+        if (rows.length < PAGE) break;
+        from += PAGE;
+      }
+
+      return allRows;
     }
 
     async function upsertRows(tableName, rows) {
