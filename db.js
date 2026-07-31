@@ -704,18 +704,32 @@
       /* List all members of the active property */
       async listMembers() {
         const pid = await getPropertyId();
-        const { data, error } = await sb
+
+        // Get members
+        const { data: members, error } = await sb
           .from('property_members')
-          .select('id, user_id, role, invited_at, auth_users:user_id(email)')
+          .select('id, user_id, role, invited_at')
           .eq('property_id', pid)
           .order('invited_at');
         if (error) throw new Error('listMembers failed: ' + error.message);
-        return (data || []).map(m => ({
-          id:         m.id,
-          userId:     m.user_id,
-          email:      m.auth_users?.email || m.user_id,
-          role:       m.role,
-          invitedAt:  m.invited_at
+        if (!members || !members.length) return [];
+
+        // Get emails from the member_emails view
+        const userIds = members.map(m => m.user_id);
+        const { data: emails } = await sb
+          .from('member_emails')
+          .select('id, email')
+          .in('id', userIds);
+
+        const emailMap = {};
+        (emails || []).forEach(e => { emailMap[e.id] = e.email; });
+
+        return members.map(m => ({
+          id:        m.id,
+          userId:    m.user_id,
+          email:     emailMap[m.user_id] || m.user_id,
+          role:      m.role,
+          invitedAt: m.invited_at
         }));
       },
 
