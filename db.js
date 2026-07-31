@@ -218,19 +218,48 @@
             /* ── Monthly actuals ── */
             case 'entries': {
               const rows = await loadTable('entries');
-              return { key, value: JSON.stringify(rows) };
+              const mapped = rows.map(r => ({
+                key:     r.key,
+                year:    r.year,
+                month:   r.month,
+                revenue: parseFloat(r.revenue) || 0,
+                adr:     parseFloat(r.adr)     || 0,
+                occ:     parseFloat(r.occ)     || 0
+              }));
+              return { key, value: JSON.stringify(mapped) };
             }
 
             /* ── Pace snapshots ── */
             case 'pace': {
               const rows = await loadTable('pace_entries');
-              return { key, value: JSON.stringify(rows) };
+              const mapped = rows.map(r => ({
+                key:       r.key,
+                year:      r.year,
+                month:     r.month,
+                asOfDate:  r.as_of_date || null,
+                revenue:   parseFloat(r.revenue) || 0,
+                adr:       parseFloat(r.adr)     || 0,
+                occ:       parseFloat(r.occ)     || 0
+              }));
+              return { key, value: JSON.stringify(mapped) };
             }
 
             /* ── Daily entries ── */
             case 'daily': {
               const rows = await loadTable('daily_entries');
-              return { key, value: JSON.stringify(rows) };
+              // Map Supabase snake_case → dashboard expected shape
+              const mapped = rows.map(r => ({
+                key:     r.key,
+                year:    r.year,
+                month:   r.month,
+                day:     r.day,
+                revenue: parseFloat(r.revenue) || 0,
+                adr:     parseFloat(r.adr)     || 0,
+                occ:     parseFloat(r.occ)     || 0,
+                rms:     r.rms != null ? parseInt(r.rms) : null,
+                source:  r.source || 'upload'
+              }));
+              return { key, value: JSON.stringify(mapped) };
             }
 
             /* ── Settings (rooms) — stored on properties row ── */
@@ -315,9 +344,36 @@
               await upsertRows('entries', parsed);
               return { key, value };
 
-            case 'pace':
-              await upsertRows('pace_entries', parsed);
+            case 'pace': {
+              // pace_entries: map asOfDate → as_of_date for Supabase
+              const pid = await getPropertyId();
+              const mapped = parsed.map(r => ({
+                key:         r.key,
+                year:        r.year,
+                month:       r.month,
+                as_of_date:  r.asOfDate || r.as_of_date || null,
+                revenue:     r.revenue  || 0,
+                adr:         r.adr      || 0,
+                occ:         r.occ      || 0,
+                property_id: pid
+              }));
+              // Sync deletions then upsert
+              const { data: existing } = await sb
+                .from('pace_entries').select('key').eq('property_id', pid);
+              const existingKeys = new Set((existing||[]).map(r=>r.key));
+              const newKeys = new Set(mapped.map(r=>r.key));
+              const toDelete = [...existingKeys].filter(k=>!newKeys.has(k));
+              if (toDelete.length) {
+                await sb.from('pace_entries').delete()
+                  .eq('property_id', pid).in('key', toDelete);
+              }
+              if (mapped.length) {
+                const { error } = await sb.from('pace_entries')
+                  .upsert(mapped, { onConflict: 'property_id,key' });
+                if (error) throw new Error('Upsert pace_entries failed: ' + error.message);
+              }
               return { key, value };
+            }
 
             case 'daily': {
               // daily_entries: sync deletions then upsert

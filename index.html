@@ -458,7 +458,7 @@ canvas{max-height:240px;}
   <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
     <div class="key-badge"><span class="dot"></span>RevPAR = Total Revenue ÷ Available Rooms</div>
     <!-- Drive status button -->
-    <button class="drive-header-btn" id="driveHeaderBtn" title="Google Drive sync">
+    <button class="drive-header-btn" id="driveHeaderBtn" title="Data Upload">
       <svg viewBox="0 0 24 24" width="14" height="14" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M8.5 3.5L3 12.5l3.5 6h11l3.5-6L16.5 3.5H8.5z" stroke="currentColor" stroke-width="1.6" fill="none"/>
         <path d="M3 12.5h18M12 3.5L6.5 20M12 3.5L17.5 20" stroke="currentColor" stroke-width="1.6"/>
@@ -592,9 +592,9 @@ canvas{max-height:240px;}
       </div>
     </div>
 
-    <!-- Google Drive folders -->
+    <!-- Drive folder names (for reference) -->
     <div class="drawer-section">
-      <h3>Google Drive Folders</h3>
+      <h3>Data Source Folders</h3>
       <span class="ds-sub">Pre-fill folder names so you don't have to re-enter them after signing in to Drive.</span>
       <div class="drawer-field-grid single">
         <div class="drawer-field">
@@ -1422,7 +1422,7 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
   });
 });
 
-// Drive header button → navigate to the Google Drive tab
+// Data Upload header button → navigate to upload tab
 document.getElementById('driveHeaderBtn').addEventListener('click',()=>{
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
@@ -1621,7 +1621,7 @@ function renderForecast(){
   if(!hasAnyPace){
     grid.innerHTML=`<div class="forecast-card" style="grid-column:span 4">
       <div class="fc-month">No on-books data</div>
-      <div class="fc-label" style="color:var(--ink-soft);margin-top:6px;">Sync your Current BotB folder from Google Drive to populate forward pace. The current BotB data feeds this section automatically.</div>
+      <div class="fc-label" style="color:var(--ink-soft);margin-top:6px;">Upload a Current BotB CSV in the <strong>Data Upload</strong> tab to populate forward pace. Once uploaded, on-books data for future months appears here automatically.</div>
     </div>`;
     return;
   }
@@ -2230,21 +2230,26 @@ function renderCalMonthlySummary(){
 
   // Prior year — actuals only for comparison
   const ly=entries.find(e=>e.year===calYear-1&&e.month===calMonth);
-  const curRP=cur?revparForEntry(cur):null;
-  const lyRP=ly?revparForEntry(ly):null;
+  const curRP=cur&&totalRooms&&cur.revenue?cur.revenue/availableRoomNights(calYear,calMonth):null;
+  const lyRP=ly&&totalRooms&&ly.revenue?ly.revenue/availableRoomNights(calYear-1,calMonth):null;
 
   const paceBadge=isPace
     ?`<span style="font-size:0.62rem;text-transform:uppercase;letter-spacing:0.05em;background:var(--accent-soft);border:1px solid var(--blue-soft);color:var(--accent);padding:2px 7px;border-radius:4px;margin-bottom:4px;display:inline-block;">On-books pace</span>`
     :'';
 
+  // Only show metrics if they have valid non-zero values
+  const hasRev=cur&&cur.revenue>0;
+  const hasAdr=cur&&cur.adr>0;
+  const hasOcc=cur&&cur.occ>0;
+
   [
-    {label:'Revenue',cur:cur?fmtMoney(cur.revenue):null,ly:ly?fmtMoney(ly.revenue):null,raw:[cur?.revenue,ly?.revenue]},
-    {label:'ADR',cur:cur?fmtMoney2(cur.adr):null,ly:ly?fmtMoney2(ly.adr):null,raw:[cur?.adr,ly?.adr]},
-    {label:'Occupancy',cur:cur?fmtPct(cur.occ):null,ly:ly?fmtPct(ly.occ):null,raw:[cur?.occ,ly?.occ]},
-    {label:'RevPAR',cur:curRP!==null?fmtMoney2(curRP):null,ly:lyRP!==null?fmtMoney2(lyRP):null,raw:[curRP,lyRP]},
+    {label:'Revenue',   cur:hasRev?fmtMoney(cur.revenue):null,  ly:ly?fmtMoney(ly.revenue):null,   raw:[hasRev?cur.revenue:null,  ly?.revenue]},
+    {label:'ADR',       cur:hasAdr?fmtMoney2(cur.adr):null,     ly:ly?fmtMoney2(ly.adr):null,      raw:[hasAdr?cur.adr:null,      ly?.adr]},
+    {label:'Occupancy', cur:hasOcc?fmtPct(cur.occ):null,        ly:ly?fmtPct(ly.occ):null,         raw:[hasOcc?cur.occ:null,      ly?.occ]},
+    {label:'RevPAR',    cur:curRP!==null?fmtMoney2(curRP):null, ly:lyRP!==null?fmtMoney2(lyRP):null,raw:[curRP,lyRP]},
   ].forEach(m=>{
     const div=document.createElement('div');div.className='cal-ms-card';
-    const pctHtml=m.raw[0]!==null&&m.raw[1]!==null&&m.raw[1]!==0?deltaHTML(m.raw[0],m.raw[1]):'';
+    const pctHtml=m.raw[0]!=null&&m.raw[1]!=null&&isFinite(m.raw[0])&&isFinite(m.raw[1])&&m.raw[1]!==0?deltaHTML(m.raw[0],m.raw[1]):'';
     div.innerHTML=`${paceBadge}<div class="label">${m.label}</div>
       <div class="cur">${m.cur||'—'}</div>
       <div class="ly">LY: ${m.ly||'—'}</div>${pctHtml}`;
@@ -2254,7 +2259,7 @@ function renderCalMonthlySummary(){
   if(!cur){
     const note=document.createElement('div');
     note.style.cssText='grid-column:span 4;color:var(--ink-soft);font-size:0.82rem;padding:8px 0;';
-    note.textContent=`No data on file for ${MONTHS[calMonth-1]} ${calYear}. Import a CSV or add a manual entry in the History tab.`;
+    note.textContent=`No data on file for ${MONTHS[calMonth-1]} ${calYear}. Upload a BotB CSV in the Data Upload tab.`;
     wrap.appendChild(note);
   }
 }
@@ -3020,7 +3025,7 @@ document.getElementById('finActualsSaveBtn').addEventListener('click',async()=>{
 });
 /* ════════════════════════════════════════
    DATA UPLOAD TAB
-   Direct CSV upload — replaces Google Drive sync.
+   Direct CSV upload tab.
    Uses the same parsers (parseCSVContent, parseProdCSV)
    already defined in the file.
    
