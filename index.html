@@ -35,6 +35,10 @@
 <script src="auth.js"></script>
 <!-- Supabase data layer — synchronous, runs after auth.js -->
 <script src="db.js"></script>
+<!-- jsPDF for client-side PDF report generation -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="report.js" defer></script>
 <style>
 /* ══════════════════════════════════════════
    DESIGN SYSTEM — StayNTouch-inspired
@@ -632,6 +636,12 @@ canvas{max-height:240px;}
   <button class="tab-btn" data-tab="rate-audit">Rate Audit</button>
   <button class="tab-btn" data-tab="financials">Financials</button>
   <button class="tab-btn" data-tab="google-drive" id="driveTabBtn">Data Upload</button>
+  <div style="margin-left:auto;display:flex;align-items:center;padding:0 4px;">
+    <button class="tab-btn" id="generateReportBtn" style="color:var(--good);border-left:1px solid var(--line);padding-left:18px;display:flex;align-items:center;gap:7px;">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 10.5v1.5h10v-1.5M7 1v8M4 6l3 3 3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Export PDF
+    </button>
+  </div>
 </nav>
 
 <!-- ═══════════════════ DASHBOARD TAB ═══════════════════ -->
@@ -3491,6 +3501,21 @@ document.getElementById('stlyLogClearAllBtn2')?.addEventListener('click', async 
     try{ if(window.DB&&window._dbReady) await window.DB.clearSTLYUploads(); }catch(e){}
     renderSTLYLog(); renderSTLYLog2();
   }
+});
+
+/* ── Export PDF button ── */
+document.getElementById('generateReportBtn')?.addEventListener('click',()=>{
+  if(typeof generateReport !== 'function'){
+    alert('Report generator not loaded yet — please wait a moment and try again.');
+    return;
+  }
+  generateReport({
+    entries, paceEntries, dailyEntries, finBudget, finActuals,
+    stlyData, totalRooms, currencySymbol, activeProfile,
+    fmtMoney, fmtMoney2, fmtPct, MONTHS,
+    getMonthlyOnBooks, getAllOnBooksMonths, daysInMonth,
+    availableRoomNights, keyFor
+  });
 });
 
 /* ── Wire drop zones ── */
