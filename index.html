@@ -436,6 +436,55 @@ canvas{max-height:240px;}
 .muq-status.pending{background:var(--paper);color:var(--ink-soft);}
 .muq-status.ok{background:var(--green-soft);color:var(--good);}
 .muq-status.err{background:var(--red-soft);color:var(--bad);}
+
+/* ── Property switcher ── */
+.prop-switch-item{display:flex;align-items:center;gap:9px;width:100%;padding:8px 12px;background:none;border:none;border-radius:6px;font-size:0.82rem;font-family:'Inter',sans-serif;color:var(--ink);cursor:pointer;text-align:left;transition:background .1s;}
+.prop-switch-item:hover{background:var(--paper);}
+.prop-switch-item.active-prop{color:var(--accent);font-weight:700;}
+.prop-switch-divider{height:1px;background:var(--line);margin:4px 6px;}
+.prop-role-badge{font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;padding:1px 5px;border-radius:3px;margin-left:auto;}
+.prop-role-badge.owner{background:var(--green-soft);color:var(--good);}
+.prop-role-badge.admin{background:var(--accent-soft);color:var(--accent);}
+.prop-role-badge.viewer{background:var(--paper);color:var(--ink-soft);}
+
+/* ── Modal system ── */
+.modal-overlay{position:fixed;inset:0;z-index:500;background:rgba(26,35,50,0.55);display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .2s;}
+.modal-overlay.open{opacity:1;pointer-events:auto;}
+.modal{background:var(--card);border-radius:var(--radius-lg);box-shadow:0 20px 60px rgba(0,0,0,0.2);width:100%;max-width:500px;max-height:88vh;display:flex;flex-direction:column;transform:translateY(12px);transition:transform .2s;}
+.modal-overlay.open .modal{transform:translateY(0);}
+.modal-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--line);flex-shrink:0;}
+.modal-header h2{font-size:0.92rem;font-weight:700;margin:0;color:var(--ink);}
+.modal-close{background:none;border:none;cursor:pointer;padding:6px;border-radius:6px;color:var(--ink-soft);font-size:1.1rem;line-height:1;font-family:'Inter',sans-serif;}
+.modal-close:hover{background:var(--paper);}
+.modal-body{flex:1;overflow-y:auto;padding:18px 20px;}
+.modal-footer{padding:14px 20px;border-top:1px solid var(--line);display:flex;align-items:center;gap:10px;flex-shrink:0;}
+
+/* Property list */
+.prop-list-item{display:flex;align-items:center;gap:12px;padding:11px 13px;border:1.5px solid var(--line);border-radius:var(--radius);margin-bottom:8px;cursor:pointer;transition:all .12s;}
+.prop-list-item:hover{border-color:var(--accent);background:var(--accent-soft);}
+.prop-list-item.active{border-color:var(--accent);background:var(--accent-soft);}
+.pli-icon{width:36px;height:36px;border-radius:8px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:0.85rem;font-weight:700;color:#fff;flex-shrink:0;text-transform:uppercase;}
+.pli-name{font-weight:700;font-size:0.88rem;color:var(--ink);}
+.pli-meta{font-size:0.7rem;color:var(--ink-soft);margin-top:1px;}
+.pli-check{margin-left:auto;color:var(--accent);font-size:1.15rem;flex-shrink:0;}
+
+/* Team members */
+.member-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);}
+.member-item:last-child{border-bottom:none;}
+.member-avatar{width:34px;height:34px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:700;color:#fff;flex-shrink:0;text-transform:uppercase;}
+.member-avatar.viewer-av{background:var(--ink-soft);}
+.member-info{flex:1;min-width:0;}
+.member-email{font-size:0.82rem;font-weight:600;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.member-meta{font-size:0.68rem;color:var(--ink-soft);margin-top:1px;}
+.member-role-sel{font-size:0.75rem;padding:3px 7px;border:1.5px solid var(--line);border-radius:5px;background:var(--paper);color:var(--ink);cursor:pointer;font-family:'Inter',sans-serif;}
+.member-remove-btn{background:none;border:1.5px solid var(--line);cursor:pointer;padding:4px 9px;border-radius:5px;color:var(--ink-soft);font-size:0.72rem;font-family:'Inter',sans-serif;transition:all .1s;white-space:nowrap;}
+.member-remove-btn:hover{background:var(--red-soft);border-color:var(--bad);color:var(--bad);}
+.invite-form{margin-top:14px;padding-top:14px;border-top:1px solid var(--line);}
+.invite-form h4{font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--ink-soft);margin:0 0 10px;}
+.invite-row{display:grid;grid-template-columns:1fr 110px auto;gap:8px;align-items:end;}
+.invite-msg{font-size:0.75rem;margin-top:8px;min-height:1.1em;}
+.invite-msg.ok{color:var(--good);}
+.invite-msg.err{color:var(--bad);}
 </style>
 <body>
 
@@ -483,10 +532,25 @@ canvas{max-height:240px;}
           <div class="um-name" id="menuUserName">—</div>
           <div class="um-email" id="menuUserEmail">—</div>
         </div>
+        <!-- Property switcher section -->
+        <div id="propSwitcherSection" style="padding:4px 0 2px;">
+          <div style="padding:4px 12px 4px;font-size:0.63rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--ink-xsoft);">Properties</div>
+          <div id="propSwitcherList"></div>
+          <button class="user-menu-item" id="addPropertyBtn">
+            <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M7.5 2v11M2 7.5h11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            Add property
+          </button>
+        </div>
+        <div class="prop-switch-divider"></div>
+        <button class="user-menu-item" id="manageTeamBtn">
+          <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><circle cx="5.5" cy="4.5" r="2" stroke="currentColor" stroke-width="1.3"/><circle cx="10.5" cy="4.5" r="2" stroke="currentColor" stroke-width="1.3"/><path d="M1 12c0-2.5 2-4 4.5-4s4.5 1.5 4.5 4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><path d="M10.5 8.5c1.5 0 3 .8 3 3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+          Manage team
+        </button>
         <button class="user-menu-item" id="openProfileDrawerBtn">
           <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><rect x="1.5" y="1.5" width="12" height="12" rx="2" stroke="currentColor" stroke-width="1.4"/><path d="M5 8.5h5M5 6h5M5 11h3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
           Property profile
         </button>
+        <div class="prop-switch-divider"></div>
         <button class="user-menu-item danger" id="signOutBtn">
           <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M6 7.5h7M10.5 5l2.5 2.5L10.5 10M9 3H3a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
           Sign out
@@ -628,6 +692,70 @@ canvas{max-height:240px;}
 <!-- Sync status banner (shown briefly after a sync completes) -->
 <div id="csvStatusBanner" style="display:none;background:var(--accent-soft);border-bottom:1px solid var(--blue-soft);
   padding:8px 32px;font-size:0.8rem;color:var(--ink-soft);text-align:center;"></div>
+
+<!-- ═══════════════════ ADD PROPERTY MODAL ═══════════════════ -->
+<div class="modal-overlay" id="addPropertyOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Add Property</h2>
+      <button class="modal-close" id="closeAddPropertyBtn">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:0.82rem;color:var(--ink-soft);margin:0 0 16px;">Each property has its own separate data — BotB uploads, financials, history, and settings. Switch between properties anytime from the account menu.</p>
+      <div class="field">
+        <label for="newPropName">Property name</label>
+        <input type="text" id="newPropName" placeholder="e.g. The Grand Harbor Hotel" style="width:100%;margin-top:4px;">
+      </div>
+      <div class="form-msg" id="addPropMsg" style="margin-top:10px;"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-primary" id="createPropertyBtn">Create property</button>
+      <button class="btn-ghost" id="cancelAddPropertyBtn">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ TEAM MANAGEMENT MODAL ═══════════════════ -->
+<div class="modal-overlay" id="teamModalOverlay">
+  <div class="modal" style="max-width:540px;">
+    <div class="modal-header">
+      <h2>Team — <span id="teamModalPropName" style="color:var(--accent);font-weight:700;"></span></h2>
+      <button class="modal-close" id="closeTeamModalBtn">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--ink-soft);margin-bottom:10px;">Current members</div>
+      <div id="teamMemberList"><div style="color:var(--ink-soft);font-size:0.82rem;padding:8px 0;">Loading…</div></div>
+      <div class="invite-form" id="inviteFormWrap">
+        <h4>Invite a team member</h4>
+        <p style="font-size:0.75rem;color:var(--ink-soft);margin:0 0 10px;">They'll receive an email link to create their account and access this property's dashboard.</p>
+        <div class="invite-row">
+          <div class="field">
+            <label for="inviteEmail">Email address</label>
+            <input type="email" id="inviteEmail" placeholder="name@hotel.com" style="width:100%;margin-top:4px;">
+          </div>
+          <div class="field">
+            <label for="inviteRole">Role</label>
+            <select id="inviteRole" style="width:100%;padding:8px 10px;border:1.5px solid var(--line);border-radius:6px;font-family:'Inter',sans-serif;font-size:0.85rem;background:#FAFBFC;margin-top:4px;">
+              <option value="viewer">Viewer</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+          <div style="padding-bottom:1px;">
+            <button class="btn-primary" id="sendInviteBtn">Send invite</button>
+          </div>
+        </div>
+        <div class="invite-msg" id="inviteMsg"></div>
+      </div>
+      <div style="margin-top:14px;padding:10px 12px;background:var(--paper);border-radius:var(--radius);font-size:0.73rem;color:var(--ink-soft);line-height:1.6;">
+        <strong style="color:var(--ink);">Admin</strong> — can upload data, edit settings, manage team.<br>
+        <strong style="color:var(--ink);">Viewer</strong> — can view all tabs and export reports. Cannot upload or change settings.
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-ghost" id="closeTeamModalFooterBtn">Close</button>
+    </div>
+  </div>
+</div>
 
 <nav class="tab-nav" role="tablist">
   <button class="tab-btn active" data-tab="dashboard">Dashboard</button>
@@ -3549,8 +3677,196 @@ function renderUploadSummary(){
 const _origTabHandler = document.querySelectorAll('.tab-btn');
 
 /* ════════════════════════════════════════
-   SUPABASE AUTH GUARD
+   PROPERTY SWITCHER & TEAM MANAGEMENT
 ════════════════════════════════════════ */
+
+let _currentProperties = [];
+let _activePropertyId  = null;
+let _isOwner           = false;
+
+async function loadPropertySwitcher() {
+  const listEl = document.getElementById('propSwitcherList');
+  if(!listEl) return;
+  listEl.innerHTML = '';
+  try {
+    _currentProperties = await window.DB.listProperties();
+    _activePropertyId  = await window.DB.getActivePropertyId();
+    _isOwner           = await window.DB.isOwner();
+    _currentProperties.forEach(prop => {
+      const isActive = prop.id === _activePropertyId;
+      const btn = document.createElement('button');
+      btn.className = 'prop-switch-item' + (isActive?' active-prop':'');
+      const roleLabel = prop.isOwner?'owner':prop.role;
+      btn.innerHTML = `
+        <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="12" height="12" rx="2" stroke="currentColor" stroke-width="1.3"/><path d="M4 5h6M4 7.5h4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+        <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${prop.name||'Unnamed property'}</span>
+        <span class="prop-role-badge ${roleLabel}">${roleLabel}</span>
+        ${isActive?'<span class="prop-check">✓</span>':''}
+      `;
+      if(!isActive) btn.addEventListener('click', () => switchProperty(prop.id, prop.name));
+      listEl.appendChild(btn);
+    });
+  } catch(e) {
+    listEl.innerHTML = '<div style="padding:6px 12px;font-size:0.75rem;color:var(--ink-soft);">Could not load properties</div>';
+  }
+}
+
+async function switchProperty(propertyId, propName) {
+  document.getElementById('userMenu')?.classList.remove('open');
+  const titleEl = document.getElementById('headerTitle');
+  if(titleEl) titleEl.textContent = 'Switching…';
+  window._dbSwitchProperty(propertyId);
+  entries=[]; paceEntries=[]; dailyEntries=[]; prodWeeks=[];
+  finBudget=[]; finActuals=[]; stlyData={current:null,prior:null}; stlyLog=[];
+  await Promise.all([
+    loadEntries(), loadPaceEntries(), loadDailyEntries(),
+    loadProdWeeks(), loadSettings(), loadFinBudget(), loadFinActuals()
+  ]);
+  await loadSTLYData();
+  loadSTLYLog().then(()=>{ renderSTLYLog(); renderSTLYLog2(); });
+  if(window.DB){
+    try{
+      const profile = await window.DB.getProfile();
+      if(profile){
+        activeProfile=profile;
+        const name=profile.name||propName;
+        if(titleEl) titleEl.textContent=name?`${name} — Performance Dashboard`:'Performance Dashboard';
+        if(profile.rooms){totalRooms=parseInt(profile.rooms);document.getElementById('f-rooms').value=totalRooms;}
+        if(profile.currency) currencySymbol=profile.currency;
+      }
+    }catch(e){}
+  }
+  render();
+  await loadPropertySwitcher();
+  renderUploadSummary();
+}
+
+/* Add property modal */
+function openAddPropertyModal(){
+  document.getElementById('userMenu')?.classList.remove('open');
+  document.getElementById('newPropName').value='';
+  document.getElementById('addPropMsg').textContent='';
+  document.getElementById('addPropertyOverlay').classList.add('open');
+  setTimeout(()=>document.getElementById('newPropName').focus(),100);
+}
+function closeAddPropertyModal(){ document.getElementById('addPropertyOverlay').classList.remove('open'); }
+document.getElementById('addPropertyBtn')?.addEventListener('click', openAddPropertyModal);
+document.getElementById('closeAddPropertyBtn')?.addEventListener('click', closeAddPropertyModal);
+document.getElementById('cancelAddPropertyBtn')?.addEventListener('click', closeAddPropertyModal);
+document.getElementById('addPropertyOverlay')?.addEventListener('click', e=>{ if(e.target===document.getElementById('addPropertyOverlay')) closeAddPropertyModal(); });
+document.getElementById('createPropertyBtn')?.addEventListener('click', async()=>{
+  const name=document.getElementById('newPropName').value.trim();
+  const msg=document.getElementById('addPropMsg');
+  if(!name){msg.textContent='Please enter a property name.';return;}
+  msg.textContent='Creating…';
+  try{
+    const newProp=await window.DB.createProperty(name);
+    msg.textContent=`"${name}" created! Switching…`;
+    setTimeout(async()=>{ closeAddPropertyModal(); await switchProperty(newProp.id,newProp.name); },800);
+  }catch(e){ msg.textContent='Error: '+e.message; }
+});
+
+/* Team management modal */
+async function openTeamModal(){
+  document.getElementById('userMenu')?.classList.remove('open');
+  const activeProp=_currentProperties.find(p=>p.id===_activePropertyId);
+  document.getElementById('teamModalPropName').textContent=activeProp?.name||'Property';
+  document.getElementById('inviteFormWrap').style.display=_isOwner?'block':'none';
+  document.getElementById('teamModalOverlay').classList.add('open');
+  await loadTeamMembers();
+}
+function closeTeamModal(){ document.getElementById('teamModalOverlay').classList.remove('open'); }
+document.getElementById('manageTeamBtn')?.addEventListener('click', openTeamModal);
+document.getElementById('closeTeamModalBtn')?.addEventListener('click', closeTeamModal);
+document.getElementById('closeTeamModalFooterBtn')?.addEventListener('click', closeTeamModal);
+document.getElementById('teamModalOverlay')?.addEventListener('click', e=>{ if(e.target===document.getElementById('teamModalOverlay')) closeTeamModal(); });
+
+async function loadTeamMembers(){
+  const listEl=document.getElementById('teamMemberList');
+  listEl.innerHTML='<div style="color:var(--ink-soft);font-size:0.82rem;padding:8px 0;">Loading…</div>';
+  try{
+    const activeProp=_currentProperties.find(p=>p.id===_activePropertyId);
+    const members=await window.DB.listMembers();
+    listEl.innerHTML='';
+    if(activeProp){
+      const ownerDiv=document.createElement('div');
+      ownerDiv.className='member-item';
+      ownerDiv.innerHTML=`
+        <div class="member-avatar">${(activeProp.name||'?')[0]}</div>
+        <div class="member-info">
+          <div class="member-email">You (owner)</div>
+          <div class="member-meta">Full access · cannot be removed</div>
+        </div>
+        <span class="prop-role-badge owner">Owner</span>
+      `;
+      listEl.appendChild(ownerDiv);
+    }
+    if(!members.length){
+      const empty=document.createElement('div');
+      empty.style.cssText='color:var(--ink-soft);font-size:0.8rem;padding:10px 0;';
+      empty.textContent='No additional team members yet. Invite someone below.';
+      listEl.appendChild(empty);
+    }
+    members.forEach(m=>{
+      const div=document.createElement('div');
+      div.className='member-item';
+      div.innerHTML=`
+        <div class="member-avatar ${m.role==='viewer'?'viewer-av':''}">${(m.email||'?')[0].toUpperCase()}</div>
+        <div class="member-info">
+          <div class="member-email">${m.email}</div>
+          <div class="member-meta">Invited ${m.invitedAt?new Date(m.invitedAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'—'}</div>
+        </div>
+        ${_isOwner?`
+          <select class="member-role-sel" data-memberid="${m.id}">
+            <option value="viewer" ${m.role==='viewer'?'selected':''}>Viewer</option>
+            <option value="admin"  ${m.role==='admin'?'selected':''}>Admin</option>
+          </select>
+          <button class="member-remove-btn" data-memberid="${m.id}">Remove</button>
+        `:`<span class="prop-role-badge ${m.role}">${m.role}</span>`}
+      `;
+      listEl.appendChild(div);
+    });
+    if(_isOwner){
+      listEl.querySelectorAll('.member-role-sel').forEach(sel=>{
+        sel.addEventListener('change', async()=>{
+          try{ await window.DB.updateMemberRole(sel.dataset.memberid,sel.value); }
+          catch(e){ alert('Could not update role: '+e.message); await loadTeamMembers(); }
+        });
+      });
+      listEl.querySelectorAll('.member-remove-btn').forEach(btn=>{
+        btn.addEventListener('click', async()=>{
+          if(!confirm('Remove this team member? They will lose access immediately.')) return;
+          try{ await window.DB.removeMember(btn.dataset.memberid); await loadTeamMembers(); }
+          catch(e){ alert('Could not remove member: '+e.message); }
+        });
+      });
+    }
+  }catch(e){
+    listEl.innerHTML=`<div style="color:var(--bad);font-size:0.8rem;padding:8px 0;">Error loading members: ${e.message}</div>`;
+  }
+}
+
+document.getElementById('sendInviteBtn')?.addEventListener('click', async()=>{
+  const email=document.getElementById('inviteEmail').value.trim();
+  const role=document.getElementById('inviteRole').value;
+  const msg=document.getElementById('inviteMsg');
+  if(!email||!email.includes('@')){ msg.className='invite-msg err'; msg.textContent='Please enter a valid email address.'; return; }
+  msg.className='invite-msg'; msg.textContent='Sending invite…';
+  document.getElementById('sendInviteBtn').disabled=true;
+  try{
+    await window.DB.inviteUser(email,role);
+    msg.className='invite-msg ok';
+    msg.textContent=`✓ Invite sent to ${email}. They'll receive an email link to join.`;
+    document.getElementById('inviteEmail').value='';
+    await loadTeamMembers();
+  }catch(e){
+    msg.className='invite-msg err';
+    msg.textContent='Error: '+e.message;
+  }finally{
+    document.getElementById('sendInviteBtn').disabled=false;
+  }
+});
+
 /* ════════════════════════════════════════
    SUPABASE AUTH GUARD
 ════════════════════════════════════════ */
@@ -3882,6 +4198,10 @@ function waitForChart(cb,tries=0){
   waitForChart(()=>{
     renderPaceChart();
   });
+  // Load property switcher in user menu
+  if(window.DB && window._dbReady){
+    loadPropertySwitcher().catch(e=>console.warn('[props]', e.message));
+  }
 })();
 
 // Register PWA service worker

@@ -40,28 +40,100 @@
        handle_new_user trigger). We cache the property_id here
        so we never make redundant SELECT calls.
     ════════════════════════════════════════════════════════════ */
-    let _propertyId = null;
+    /* ════════════════════════════════════════════════════════════
+       PROPERTY RESOLVER — multi-property aware
+       Supports multiple properties per user.
+       Active property stored in Supabase active_property table
+       and cached in localStorage as fallback.
+    ════════════════════════════════════════════════════════════ */
+    let _propertyId   = null;  // currently active property UUID
+    let _propertyList = null;  // cached list of all accessible properties
 
+    /* Get the active property ID — respects user's selection */
     async function getPropertyId() {
       if (_propertyId) return _propertyId;
-      const user = (await sb.auth.getUser()).data.user;
+
+      const user = (await sb.auth.getSession()).data.session?.user;
       if (!user) throw new Error('Not authenticated');
 
-      const { data, error } = await sb
-        .from('properties')
-        .select('id')
-        .eq('user_id', user.id)
-        .limit(1)
-        .single();
+      // Check localStorage first (instant, avoids extra round-trip)
+      const cached = localStorage.getItem('hd_active_property_' + user.id);
 
-      if (error) throw new Error('Could not load property: ' + error.message);
-      _propertyId = data.id;
+      // Load all accessible properties (owned + member)
+      const list = await listAllProperties(user.id);
+      if (!list.length) throw new Error('No properties found for this account');
+
+      // Use cached selection if it's still valid
+      if (cached && list.find(p => p.id === cached)) {
+        _propertyId = cached;
+        return _propertyId;
+      }
+
+      // Default to first property
+      _propertyId = list[0].id;
+      localStorage.setItem('hd_active_property_' + user.id, _propertyId);
       return _propertyId;
     }
 
-    /* Reset cached ID on sign-out (handles account switching) */
+    /* Load all properties this user owns or is a member of */
+    async function listAllProperties(userId) {
+      if (_propertyList) return _propertyList;
+
+      // Owned properties
+      const { data: owned } = await sb
+        .from('properties')
+        .select('id, name, city, state, total_rooms')
+        .eq('user_id', userId)
+        .order('name');
+
+      // Member properties (invited)
+      const { data: memberships } = await sb
+        .from('property_members')
+        .select('property_id, role, properties(id,name,city,state,total_rooms)')
+        .eq('user_id', userId);
+
+      const memberProps = (memberships || [])
+        .filter(m => m.properties)
+        .map(m => ({ ...m.properties, role: m.role, isMember: true }));
+
+      // Merge, deduplicate
+      const all = [
+        ...(owned || []).map(p => ({ ...p, role: 'admin', isOwner: true })),
+        ...memberProps.filter(m => !(owned||[]).find(o => o.id === m.id))
+      ];
+
+      _propertyList = all;
+      return _propertyList;
+    }
+
+    /* Switch to a different property — clears all cached data */
+    function switchToProperty(propertyId) {
+      _propertyId   = propertyId;
+      _propertyList = null;
+      // Persist selection
+      sb.auth.getSession().then(({ data }) => {
+        if (data.session?.user) {
+          localStorage.setItem('hd_active_property_' + data.session.user.id, propertyId);
+          // Also persist to Supabase
+          sb.from('active_property').upsert({
+            user_id:     data.session.user.id,
+            property_id: propertyId,
+            updated_at:  new Date().toISOString()
+          }, { onConflict: 'user_id' }).then(() => {});
+        }
+      });
+    }
+
+    /* Expose switch function globally for index.html to call */
+    window._dbSwitchProperty = switchToProperty;
+    window._dbListProperties  = () => _propertyList;
+
+    /* Reset on sign-out */
     Auth.onAuthStateChange((event) => {
-      if (event === 'SIGNED_OUT') _propertyId = null;
+      if (event === 'SIGNED_OUT') {
+        _propertyId   = null;
+        _propertyList = null;
+      }
     });
 
     /* ════════════════════════════════════════════════════════════
@@ -592,6 +664,121 @@
       /* Delete a single row from any table by key */
       async deleteByKey(table, key) {
         await deleteRow(table, key);
+      },
+
+      /* ── Multi-property management ─────────────────────────────── */
+
+      /* List all properties this user owns or is a member of */
+      async listProperties() {
+        const user = (await sb.auth.getSession()).data.session?.user;
+        if (!user) throw new Error('Not authenticated');
+        return await listAllProperties(user.id);
+      },
+
+      /* Create a new property for this user */
+      async createProperty(name) {
+        const user = (await sb.auth.getSession()).data.session?.user;
+        if (!user) throw new Error('Not authenticated');
+        const { data, error } = await sb
+          .from('properties')
+          .insert({ user_id: user.id, name, currency: '$', fiscal_year_start: 1 })
+          .select('id, name')
+          .single();
+        if (error) throw new Error('createProperty failed: ' + error.message);
+        _propertyList = null; // bust cache
+        return data;
+      },
+
+      /* Switch active property — reloads all dashboard data */
+      switchProperty(propertyId) {
+        switchToProperty(propertyId);
+      },
+
+      /* Get current active property ID */
+      async getActivePropertyId() {
+        return await getPropertyId();
+      },
+
+      /* ── Team management (property_members) ────────────────────── */
+
+      /* List all members of the active property */
+      async listMembers() {
+        const pid = await getPropertyId();
+        const { data, error } = await sb
+          .from('property_members')
+          .select('id, user_id, role, invited_at, auth_users:user_id(email)')
+          .eq('property_id', pid)
+          .order('invited_at');
+        if (error) throw new Error('listMembers failed: ' + error.message);
+        return (data || []).map(m => ({
+          id:         m.id,
+          userId:     m.user_id,
+          email:      m.auth_users?.email || m.user_id,
+          role:       m.role,
+          invitedAt:  m.invited_at
+        }));
+      },
+
+      /* Invite a user by email to the active property.
+         Uses Supabase admin invite — sends a magic link email.
+         The invited user clicks the link, sets a password, and
+         is automatically added to property_members on first login
+         via the handle_new_member trigger (see SQL migration). */
+      async inviteUser(email, role = 'viewer') {
+        const pid = await getPropertyId();
+        const user = (await sb.auth.getSession()).data.session?.user;
+        if (!user) throw new Error('Not authenticated');
+
+        // Send invite via Supabase Auth
+        const { data: invite, error: inviteErr } = await sb.auth.admin.inviteUserByEmail(email, {
+          data: { invited_to_property: pid, role }
+        });
+        if (inviteErr) throw new Error('Invite failed: ' + inviteErr.message);
+
+        // Pre-create the membership row so it's ready when they accept
+        const { error: memberErr } = await sb
+          .from('property_members')
+          .upsert({
+            property_id: pid,
+            user_id:     invite.user.id,
+            role,
+            invited_by:  user.id
+          }, { onConflict: 'property_id,user_id' });
+        if (memberErr) throw new Error('Member insert failed: ' + memberErr.message);
+
+        return invite;
+      },
+
+      /* Update a member's role */
+      async updateMemberRole(memberId, role) {
+        const { error } = await sb
+          .from('property_members')
+          .update({ role })
+          .eq('id', memberId);
+        if (error) throw new Error('updateMemberRole failed: ' + error.message);
+      },
+
+      /* Remove a member from the active property */
+      async removeMember(memberId) {
+        const { error } = await sb
+          .from('property_members')
+          .delete()
+          .eq('id', memberId);
+        if (error) throw new Error('removeMember failed: ' + error.message);
+      },
+
+      /* Check if current user is owner of active property */
+      async isOwner() {
+        const pid  = await getPropertyId();
+        const user = (await sb.auth.getSession()).data.session?.user;
+        if (!user) return false;
+        const { data } = await sb
+          .from('properties')
+          .select('id')
+          .eq('id', pid)
+          .eq('user_id', user.id)
+          .maybeSingle();
+        return !!data;
       },
 
       /* ── STLY Upload Log ──────────────────────────────────────
