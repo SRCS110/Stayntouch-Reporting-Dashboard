@@ -154,11 +154,10 @@ window.generateReport = function(ctx) {
 
   let cy = metaY + 22;
 
-  /* MTD KPIs */
-  cy = sectionLabel(cy, `${MONTHS[curMonth-1]} ${curYear} — Month to Date`);
-
-  const mtdDays  = dailyEntries.filter(d=>d.year===curYear&&d.month===curMonth);
-  const mtdRev   = mtdDays.reduce((s,d)=>s+(parseFloat(d.revenue)||0),0);
+  /* MTD KPIs — only days elapsed so far this month */
+  const todayDay = today.getDate();
+  const mtdDays  = dailyEntries.filter(d=>d.year===curYear&&d.month===curMonth&&d.day<=todayDay);
+  cy = sectionLabel(cy, `${MONTHS[curMonth-1]} ${curYear} — Month to Date (${MONTHS[curMonth-1]} 1–${todayDay})`);
   const mtdRms   = mtdDays.reduce((s,d)=>s+(parseInt(d.rms)||0),0);
   const mtdOccS  = mtdDays.reduce((s,d)=>s+(parseFloat(d.occ)||0),0);
   const mtdADR   = mtdRms>0 ? mtdRev/mtdRms : 0;

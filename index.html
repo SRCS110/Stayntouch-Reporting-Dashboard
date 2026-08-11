@@ -690,9 +690,6 @@ canvas{max-height:240px;}
 </div>
 
 <!-- Sync status banner (shown briefly after a sync completes) -->
-<div id="csvStatusBanner" style="display:none;background:var(--accent-soft);border-bottom:1px solid var(--blue-soft);
-  padding:8px 32px;font-size:0.8rem;color:var(--ink-soft);text-align:center;"></div>
-
 <!-- ═══════════════════ ADD PROPERTY MODAL ═══════════════════ -->
 <div class="modal-overlay" id="addPropertyOverlay">
   <div class="modal">
@@ -970,72 +967,10 @@ canvas{max-height:240px;}
 <!-- ═══════════════════ HISTORY TAB ═══════════════════ -->
 <div id="tab-history" class="tab-panel">
 
-  <div id="csvStatusBanner" style="display:none;background:#EBF5EF;border:1px solid #A3D4B5;border-radius:8px;padding:12px 16px;margin-bottom:20px;font-size:0.875rem;color:#2F6B4F;"></div>
-
-  <section>
-    <div class="section-head">
-      <h2>Import from CSV</h2>
-      <span class="sub">Upload a "Business on the Books" export — daily rows are auto-segmented by month</span>
-    </div>
-    <div class="panel">
-      <input type="file" id="csvFile" accept=".csv">
-      <div id="csvPreview" style="display:none;margin-top:18px;">
-        <div class="form-grid" style="grid-template-columns:repeat(3,1fr);">
-          <div class="field">
-            <label for="c-year">Year</label><input type="number" id="c-year">
-          </div>
-          <div class="field">
-            <label for="c-month">Month</label>
-            <select id="c-month"><option value="">Select</option></select>
-          </div>
-          <div class="field">
-            <label for="c-mode">Import as</label>
-            <select id="c-mode">
-              <option value="actual">Actual monthly result</option>
-              <option value="pace">On-books pace snapshot</option>
-            </select>
-          </div>
-          <div class="field"><label for="c-revenue">Revenue ($)</label><input type="number" id="c-revenue" step="0.01"></div>
-          <div class="field"><label for="c-adr">ADR ($)</label><input type="number" id="c-adr" step="0.01"></div>
-          <div class="field"><label for="c-occ">Occupancy (%)</label><input type="number" id="c-occ" step="0.1"></div>
-          <div class="field" id="c-asof-wrap" style="display:none;">
-            <label for="c-asof">As of date</label><input type="date" id="c-asof">
-          </div>
-        </div>
-        <div style="margin-top:14px;display:flex;gap:10px;">
-          <button type="button" class="btn-primary" id="csvConfirmBtn">Confirm import</button>
-          <button type="button" class="btn-ghost" id="csvCancelBtn">Cancel</button>
-        </div>
-        <div class="form-msg" id="csvMsg"></div>
-      </div>
-      <div id="csvMultiPreview" style="display:none;margin-top:18px;">
-        <p style="margin:0 0 12px;font-size:0.85rem;color:var(--ink-soft);">
-          File spans multiple months — each was totaled from its daily rows. Set "Import as" per month, then confirm.
-        </p>
-        <div class="field" style="max-width:220px;margin-bottom:14px;">
-          <label for="cm-asof">As of date (for any month marked "pace")</label>
-          <input type="date" id="cm-asof">
-        </div>
-        <div style="overflow-x:auto;">
-          <table id="csvMultiTable">
-            <thead><tr><th>Month</th><th>Days</th><th>Revenue</th><th>ADR</th><th>Occupancy</th><th>Import as</th></tr></thead>
-            <tbody id="csvMultiBody"></tbody>
-          </table>
-        </div>
-        <div style="margin-top:14px;display:flex;gap:10px;">
-          <button type="button" class="btn-primary" id="csvMultiConfirmBtn">Confirm import</button>
-          <button type="button" class="btn-ghost" id="csvMultiCancelBtn">Cancel</button>
-        </div>
-        <div class="form-msg" id="csvMultiMsg"></div>
-      </div>
-      <div class="form-msg" id="csvFileMsg"></div>
-    </div>
-  </section>
-
   <section>
     <div class="section-head">
       <h2>Add monthly data manually</h2>
-      <span class="sub">One row per month</span>
+      <span class="sub">One row per month — use for historical actuals not covered by BotB uploads</span>
     </div>
     <div class="panel">
       <form id="entryForm">
@@ -1059,14 +994,20 @@ canvas{max-height:240px;}
   <section>
     <div class="section-head">
       <h2>Monthly records</h2>
-      <span class="sub" id="recordCount"></span>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <span class="sub" id="recordCount"></span>
+        <button class="btn-ghost" id="historyToggleBtn" style="font-size:0.72rem;padding:4px 10px;display:none;">Show all</button>
+      </div>
     </div>
     <div class="panel" style="padding:0;overflow-x:auto;">
       <table>
         <thead><tr><th>Year</th><th>Month</th><th>Revenue</th><th>ADR</th><th>Occupancy</th><th>RevPAR</th><th></th></tr></thead>
         <tbody id="dataBody"></tbody>
       </table>
-      <div class="empty-state" id="emptyState" style="display:none;">No data yet — import a CSV or add a month manually above.</div>
+      <div class="empty-state" id="emptyState" style="display:none;">No data yet — upload a BotB CSV in the Data Upload tab or add a month manually above.</div>
+      <div id="historyShowMore" style="display:none;padding:12px 16px;border-top:1px solid var(--line);text-align:center;">
+        <button class="btn-ghost" id="historyShowMoreBtn" style="font-size:0.78rem;">Show all records</button>
+      </div>
     </div>
   </section>
 
@@ -1103,15 +1044,7 @@ canvas{max-height:240px;}
   <section>
     <div class="section-head">
       <h2>Channel Production Report</h2>
-      <span class="sub">Rooms booked per rate plan, by week — imported from Daily Production by Rate CSV</span>
-    </div>
-
-    <div class="audit-controls" style="align-items:flex-end;gap:14px;">
-      <div class="field" style="min-width:180px;">
-        <label for="prod-import">Import CSV</label>
-        <input type="file" id="prod-import" accept=".csv">
-      </div>
-      <div class="form-msg" id="prodImportMsg" style="margin-top:0;align-self:center;"></div>
+      <span class="sub">Rooms booked per rate plan, by week — upload via the Data Upload tab</span>
     </div>
 
     <div class="panel" style="padding:0;overflow-x:auto;">
@@ -1120,7 +1053,7 @@ canvas{max-height:240px;}
         <tbody id="prodBody"></tbody>
         <tfoot id="prodFoot"></tfoot>
       </table>
-      <div class="empty-state" id="prodEmpty">Import a "Daily Production by Rate" CSV above to populate this report. Each import adds a week column — historical weeks are preserved.</div>
+      <div class="empty-state" id="prodEmpty">No production data yet — upload a "Daily Production by Rate" CSV in the <strong>Data Upload</strong> tab. Each upload adds a week column and historical weeks are preserved.</div>
     </div>
   </section>
 
@@ -1308,6 +1241,14 @@ canvas{max-height:240px;}
       <div class="upload-notice">
         <strong>Current BotB</strong> — Upload the "Business on the Books" CSV export from StayNTouch. Each upload overwrites daily data for the dates covered, so you always have the latest occupancy picture. Upload as often as you like — daily is recommended.
       </div>
+      <!-- Upload history log -->
+      <div class="upload-history" id="botbCurrentHistory" style="display:none;">
+        <h4>Upload history</h4>
+        <table class="upload-log-table">
+          <thead><tr><th>Date</th><th>File</th><th>Days</th><th>Months</th><th>Status</th></tr></thead>
+          <tbody id="botbCurrentHistoryBody"></tbody>
+        </table>
+      </div>
     </div>
   </div>
 
@@ -1335,6 +1276,14 @@ canvas{max-height:240px;}
       <div class="upload-notice">
         <strong>Historical BotB</strong> — Upload prior-year Business on the Books exports. Each date row is inserted only if no data already exists for that date — existing historical data is never overwritten. Upload your full prior year once to establish the baseline.
       </div>
+      <!-- Upload history log -->
+      <div class="upload-history" id="botbHistHistory" style="display:none;">
+        <h4>Upload history</h4>
+        <table class="upload-log-table">
+          <thead><tr><th>Date</th><th>File</th><th>New days</th><th>Skipped</th><th>Status</th></tr></thead>
+          <tbody id="botbHistHistoryBody"></tbody>
+        </table>
+      </div>
     </div>
   </div>
 
@@ -1361,6 +1310,14 @@ canvas{max-height:240px;}
       <div class="upload-result" id="prodResult"></div>
       <div class="upload-notice">
         <strong>Production by Rate</strong> — Upload the "Daily Production by Rate" CSV export from StayNTouch. Each file represents one week. Re-uploading the same week overwrites that week's data. Historical weeks are preserved.
+      </div>
+      <!-- Upload history log -->
+      <div class="upload-history" id="prodHistory" style="display:none;">
+        <h4>Upload history</h4>
+        <table class="upload-log-table">
+          <thead><tr><th>Date</th><th>File</th><th>Week</th><th>Rate plans</th><th>Status</th></tr></thead>
+          <tbody id="prodHistoryBody"></tbody>
+        </table>
       </div>
     </div>
   </div>
@@ -1556,7 +1513,7 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
     if(btn.dataset.tab==='calendar') renderCalendar();
     if(btn.dataset.tab==='rate-audit') waitForChart(renderAudit);
     if(btn.dataset.tab==='financials') renderFinancials();
-    if(btn.dataset.tab==='google-drive'){ renderUploadSummary(); renderSTLYLog2(); }
+    if(btn.dataset.tab==='google-drive'){ renderUploadSummary(); renderSTLYLog2(); renderAllUploadLogs(); }
   });
 });
 
@@ -2381,19 +2338,67 @@ document.getElementById('paceForm').addEventListener('submit',async(ev)=>{
 /* ════════════════════════════════════════
    HISTORY — table + charts + manual entry
 ════════════════════════════════════════ */
+let _historyShowAll = false;
+
 function renderTable(){
-  const body=document.getElementById('dataBody');body.innerHTML='';
-  document.getElementById('recordCount').textContent=entries.length?`${entries.length} month${entries.length===1?'':'s'} on file`:'';
-  document.getElementById('emptyState').style.display=entries.length?'none':'block';
-  [...entries].sort((a,b)=>b.year-a.year||b.month-a.month).forEach(e=>{
-    const rp=revparForEntry(e);const tr=document.createElement('tr');
-    tr.innerHTML=`<td>${e.year}</td><td>${MONTHS[e.month-1]}</td><td>${fmtMoney(e.revenue)}</td><td>${fmtMoney2(e.adr)}</td><td>${fmtPct(e.occ)}</td><td>${rp===null?'—':fmtMoney2(rp)}</td>
-      <td class="row-actions"><button class="btn-ghost" data-edit="${e.key}">Edit</button><button class="btn-ghost" data-del="${e.key}">Del</button></td>`;
+  const body = document.getElementById('dataBody');
+  body.innerHTML = '';
+  const sorted = [...entries].sort((a,b) => b.year-a.year || b.month-a.month);
+  const LIMIT = 12;
+  const hasMore = sorted.length > LIMIT;
+  const showMore = document.getElementById('historyShowMore');
+  const toggleBtn = document.getElementById('historyToggleBtn');
+
+  // Update count label
+  document.getElementById('recordCount').textContent = sorted.length
+    ? `${sorted.length} month${sorted.length===1?'':'s'} on file`
+    : '';
+  document.getElementById('emptyState').style.display = sorted.length ? 'none' : 'block';
+
+  // Show toggle button if more than 12 records
+  if(toggleBtn) toggleBtn.style.display = hasMore ? 'inline-flex' : 'none';
+  if(showMore)  showMore.style.display   = hasMore && !_historyShowAll ? 'block' : 'none';
+
+  const display = _historyShowAll ? sorted : sorted.slice(0, LIMIT);
+
+  display.forEach(e => {
+    const rp = revparForEntry(e);
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${e.year}</td><td>${MONTHS[e.month-1]}</td>
+      <td class="num">${fmtMoney(e.revenue)}</td>
+      <td class="num">${fmtMoney2(e.adr)}</td>
+      <td class="num">${fmtPct(e.occ)}</td>
+      <td class="num">${rp===null?'—':fmtMoney2(rp)}</td>
+      <td class="row-actions">
+        <button class="btn-ghost" data-edit="${e.key}">Edit</button>
+        <button class="btn-ghost" data-del="${e.key}">Del</button>
+      </td>`;
     body.appendChild(tr);
   });
-  body.querySelectorAll('[data-edit]').forEach(b=>b.addEventListener('click',()=>startEdit(b.dataset.edit)));
-  body.querySelectorAll('[data-del]').forEach(b=>b.addEventListener('click',()=>deleteEntry(b.dataset.del)));
+
+  if(hasMore && !_historyShowAll) {
+    const moreRow = document.createElement('tr');
+    moreRow.innerHTML = `<td colspan="7" style="text-align:center;padding:12px;color:var(--ink-soft);font-size:0.8rem;background:#FAFBFC;">
+      Showing last ${LIMIT} of ${sorted.length} months
+    </td>`;
+    body.appendChild(moreRow);
+  }
+
+  body.querySelectorAll('[data-edit]').forEach(b => b.addEventListener('click', () => startEdit(b.dataset.edit)));
+  body.querySelectorAll('[data-del]').forEach(b  => b.addEventListener('click', () => deleteEntry(b.dataset.del)));
 }
+
+// Toggle handlers
+document.getElementById('historyToggleBtn')?.addEventListener('click', () => {
+  _historyShowAll = !_historyShowAll;
+  document.getElementById('historyToggleBtn').textContent = _historyShowAll ? 'Show last 12' : 'Show all';
+  renderTable();
+});
+document.getElementById('historyShowMoreBtn')?.addEventListener('click', () => {
+  _historyShowAll = true;
+  document.getElementById('historyToggleBtn').textContent = 'Show last 12';
+  renderTable();
+});
 function startEdit(key){
   const e=entries.find(x=>x.key===key);if(!e)return;
   document.getElementById('f-year').value=e.year;document.getElementById('f-month').value=e.month;
@@ -2713,18 +2718,25 @@ function renderProdReport(){
     body.appendChild(tr);
   });
 
-  // OTA share row — OTA total / grand total
-  const otaRow = document.createElement('tr');
-  otaRow.style.cssText='color:var(--ink-soft);font-size:0.8rem;';
-  const otaCells = weeks.map(w=>{
-    const otaTotal = Object.entries(w.plans)
-      .filter(([k])=>k.toLowerCase().includes('ota'))
-      .reduce((s,[,v])=>s+v,0);
-    const pct = w.total>0 ? Math.round((otaTotal/w.total)*100) : 0;
-    return `<td style="color:var(--ink-soft);font-size:0.75rem;">${pct}%</td>`;
+  // Share % row — each plan's rooms as % of week total
+  const shareRow = document.createElement('tr');
+  shareRow.style.cssText='background:#FAFBFC;';
+  const shareCells = weeks.map(w=>{
+    if(!w.total||w.total===0) return `<td style="color:var(--ink-soft);font-size:0.75rem;">—</td>`;
+    // Find largest non-direct plan (OTA/3rd party) share
+    const otaLike = Object.entries(w.plans)
+      .filter(([k])=>!/direct|bar|best available|rack|corp|negotiated|member/i.test(k));
+    const otaTotal = otaLike.reduce((s,[,v])=>s+(v||0),0);
+    const directTotal = w.total - otaTotal;
+    const otaPct   = Math.round((otaTotal/w.total)*100);
+    const directPct= Math.round((directTotal/w.total)*100);
+    return `<td style="font-size:0.72rem;color:var(--ink-soft);">
+      <span title="OTA/3rd party share">${otaPct}% OTA</span><br>
+      <span title="Direct/BAR share">${directPct}% Direct</span>
+    </td>`;
   }).join('');
-  otaRow.innerHTML=`<td style="color:var(--ink-soft);font-size:0.8rem;font-family:'Inter',sans-serif;">OTA Share %</td>${otaCells}`;
-  body.appendChild(otaRow);
+  shareRow.innerHTML=`<td style="color:var(--ink-soft);font-size:0.8rem;font-family:'Inter',sans-serif;">Channel Mix</td>${shareCells}`;
+  body.appendChild(shareRow);
 
   // Footer — Total Business on the Books from BotB dailyEntries (rms field), not rate plan sum
   const ftr = document.createElement('tr');
@@ -2754,29 +2766,7 @@ function renderProdReport(){
 function renderAudit(){ renderProdReport(); }
 
 // CSV import handler
-document.getElementById('prod-import').addEventListener('change', async ev=>{
-  const file = ev.target.files[0];
-  const msg  = document.getElementById('prodImportMsg');
-  if(!file) return;
-  msg.textContent = 'Parsing…';
-  const reader = new FileReader();
-  reader.onload = async ()=>{
-    try{
-      const week = parseProdCSV(reader.result);
-      // Upsert by weekKey
-      const idx = prodWeeks.findIndex(w=>w.weekKey===week.weekKey);
-      if(idx>=0) prodWeeks[idx]=week; else prodWeeks.push(week);
-      await saveProdWeeks();
-      msg.textContent = `✓ Imported week ${week.label} — ${Object.keys(week.plans).length} rate plans, ${week.total} total rooms.`;
-      renderProdReport();
-    }catch(e){
-      msg.textContent = `Error: ${e.message}`;
-      console.error('parseProdCSV error:',e);
-    }
-    ev.target.value='';
-  };
-  reader.readAsText(file);
-});
+// Production upload handled by Data Upload tab
 
 /* ════════════════════════════════════════
    CSV PARSING — shared robust helpers
@@ -2854,163 +2844,22 @@ function parseCSVContent(text){
   return{dailyRows,monthlyAggs:aggregateDailyRows(dailyRows)};
 }
 
-let lastCsvFileName='',pendingDailyRows=[],pendingMonthlyAggregates=[];
-
-document.getElementById('csvFile').addEventListener('change',ev=>{
-  const file=ev.target.files[0];
-  const fileMsg=document.getElementById('csvFileMsg');
-  document.getElementById('csvPreview').style.display='none';
-  document.getElementById('csvMultiPreview').style.display='none';
-  fileMsg.textContent='';if(!file)return;lastCsvFileName=file.name;
-  const reader=new FileReader();
-  reader.onload=()=>{
-    try{
-      const{dailyRows,monthlyAggs}=parseCSVContent(reader.result);
-      pendingDailyRows=dailyRows;pendingMonthlyAggregates=monthlyAggs;
-      if(!pendingDailyRows.length)throw new Error('No valid daily rows found in this file.');
-      const now=new Date();
-      if(pendingMonthlyAggregates.length===1){
-        const agg=pendingMonthlyAggregates[0];
-        document.getElementById('c-year').value=agg.year;document.getElementById('c-month').value=agg.month;
-        document.getElementById('c-revenue').value=agg.revenue.toFixed(2);document.getElementById('c-adr').value=agg.adr.toFixed(2);document.getElementById('c-occ').value=agg.occ.toFixed(2);
-        const isFut=(agg.year>now.getFullYear())||(agg.year===now.getFullYear()&&agg.month>=now.getMonth()+1);
-        document.getElementById('c-mode').value=isFut?'pace':'actual';
-        document.getElementById('c-asof-wrap').style.display=isFut?'block':'none';
-        document.getElementById('c-asof').value=extractAsOf(lastCsvFileName)||todayISO();
-        document.getElementById('csvMsg').textContent=`Read ${agg.days} day(s) for ${MONTHS[agg.month-1]} ${agg.year}. Review and confirm.`;
-        document.getElementById('csvPreview').style.display='block';
-      } else {
-        document.getElementById('cm-asof').value=extractAsOf(lastCsvFileName)||todayISO();
-        const tbody=document.getElementById('csvMultiBody');tbody.innerHTML='';
-        pendingMonthlyAggregates.forEach(agg=>{
-          const now2=new Date();
-          const isFut=(agg.year>now2.getFullYear())||(agg.year===now2.getFullYear()&&agg.month>=now2.getMonth()+1);
-          const tr=document.createElement('tr');tr.dataset.year=agg.year;tr.dataset.month=agg.month;
-          tr.innerHTML=`<td>${MONTHS[agg.month-1]} ${agg.year}</td><td>${agg.days}</td><td>${fmtMoney(agg.revenue)}</td><td>${fmtMoney2(agg.adr)}</td><td>${fmtPct(agg.occ)}</td>
-            <td><select class="cm-mode-select"><option value="actual" ${!isFut?'selected':''}>Actual</option><option value="pace" ${isFut?'selected':''}>Pace snapshot</option></select></td>`;
-          tbody.appendChild(tr);
-        });
-        document.getElementById('csvMultiMsg').textContent=`Read ${pendingDailyRows.length} day(s) across ${pendingMonthlyAggregates.length} month(s).`;
-        document.getElementById('csvMultiPreview').style.display='block';
-      }
-    }catch(err){pendingDailyRows=[];pendingMonthlyAggregates=[];fileMsg.textContent=`Could not read file: ${err.message}`;}
-  };
-  reader.readAsText(file);
-});
-document.getElementById('c-mode').addEventListener('change',ev=>{
-  const ip=ev.target.value==='pace';document.getElementById('c-asof-wrap').style.display=ip?'block':'none';
-  if(ip&&!document.getElementById('c-asof').value)document.getElementById('c-asof').value=extractAsOf(lastCsvFileName)||todayISO();
-});
-function resetCsvUI(){document.getElementById('csvPreview').style.display='none';document.getElementById('csvMultiPreview').style.display='none';document.getElementById('csvFile').value='';document.getElementById('csvFileMsg').textContent='';pendingDailyRows=[];pendingMonthlyAggregates=[];}
-document.getElementById('csvCancelBtn').addEventListener('click',resetCsvUI);
-document.getElementById('csvMultiCancelBtn').addEventListener('click',resetCsvUI);
+/* CSV import handlers — legacy stubs kept for safety, elements removed from UI */
+let lastCsvFileName='', pendingDailyRows=[], pendingMonthlyAggregates=[];
+function resetCsvUI(){ pendingDailyRows=[]; pendingMonthlyAggregates=[]; }
 async function commitDailyRows(){
-  if(!pendingDailyRows.length)return 0;
+  if(!pendingDailyRows.length) return 0;
   pendingDailyRows.forEach(d=>{
     const i=dailyEntries.findIndex(x=>x.key===d.key);
-    if(i>=0)dailyEntries[i]=d;else dailyEntries.push(d);
+    if(i>=0) dailyEntries[i]=d; else dailyEntries.push(d);
   });
-  try{
-    await saveDailyEntries();
-  }catch(e){
-    console.error('commitDailyRows saveDailyEntries error:',e);
-  }
-  const n=pendingDailyRows.length;pendingDailyRows=[];return n;
+  try{ await saveDailyEntries(); }catch(e){ console.error('commitDailyRows error:',e); }
+  const n=pendingDailyRows.length; pendingDailyRows=[]; return n;
 }
 
-document.getElementById('csvConfirmBtn').addEventListener('click',async()=>{
-  const year=parseInt(document.getElementById('c-year').value,10);
-  const month=parseInt(document.getElementById('c-month').value,10);
-  const revenue=parseFloat(document.getElementById('c-revenue').value);
-  const adr=parseFloat(document.getElementById('c-adr').value);
-  const occ=parseFloat(document.getElementById('c-occ').value);
-  const mode=document.getElementById('c-mode').value;
-  const msg=document.getElementById('csvMsg');
-  if(!year||!month||isNaN(revenue)||isNaN(adr)||isNaN(occ)){msg.textContent='Fill in all fields.';return;}
-
-  const key=keyFor(year,month);
-  const rec={key,year,month,revenue,adr,occ};
-
-  if(mode==='actual'){
-    const i=entries.findIndex(e=>e.key===key);
-    if(i>=0)entries[i]=rec;else entries.push(rec);
-    entries.sort((a,b)=>a.year-b.year||a.month-b.month);
-    await saveEntries();
-    msg.textContent=`✓ Saved ${MONTHS[month-1]} ${year} as actual. Revenue: ${fmtMoney(revenue)}, ADR: ${fmtMoney2(adr)}, Occ: ${fmtPct(occ)}.`;
-  } else {
-    const asOf=document.getElementById('c-asof').value||todayISO();
-    const pr={key,year,month,asOfDate:asOf,revenue,adr,occ};
-    const i=paceEntries.findIndex(p=>p.key===key);
-    if(i>=0)paceEntries[i]=pr;else paceEntries.push(pr);
-    paceEntries.sort((a,b)=>a.year-b.year||a.month-b.month);
-    await savePaceEntries();
-    msg.textContent=`✓ Saved ${MONTHS[month-1]} ${year} as pace snapshot (as of ${asOf}).`;
-  }
-
-  const dc=await commitDailyRows();
-  if(dc) msg.textContent+=` Also stored ${dc} daily record(s) for the calendar.`;
-
-  // Hide preview but keep success message visible
-  document.getElementById('csvPreview').style.display='none';
-  document.getElementById('csvFileMsg').textContent='';
-  document.getElementById('csvFile').value='';
-  pendingMonthlyAggregates=[];
-
-  // Show persistent banner
-  const banner=document.getElementById('csvStatusBanner');
-  banner.textContent=msg.textContent;
-  banner.style.display='block';
-  banner.scrollIntoView({behavior:'smooth',block:'nearest'});
-  render();
-});
-
-document.getElementById('csvMultiConfirmBtn').addEventListener('click',async()=>{
-  const msg=document.getElementById('csvMultiMsg');
-  const asOf=document.getElementById('cm-asof').value||todayISO();
-  const trs=[...document.getElementById('csvMultiBody').querySelectorAll('tr')];
-  if(!trs.length){msg.textContent='Nothing to import.';return;}
-
-  let ac=0,pc=0;
-  trs.forEach(tr=>{
-    const year=parseInt(tr.dataset.year,10),month=parseInt(tr.dataset.month,10);
-    const agg=pendingMonthlyAggregates.find(a=>a.year===year&&a.month===month);
-    if(!agg)return;
-    const mode=tr.querySelector('.cm-mode-select').value;
-    const key=keyFor(year,month);
-    if(mode==='actual'){
-      const rec={key,year,month,revenue:agg.revenue,adr:agg.adr,occ:agg.occ};
-      const i=entries.findIndex(e=>e.key===key);
-      if(i>=0)entries[i]=rec;else entries.push(rec);
-      ac++;
-    } else {
-      const rec={key,year,month,asOfDate:asOf,revenue:agg.revenue,adr:agg.adr,occ:agg.occ};
-      const i=paceEntries.findIndex(p=>p.key===key);
-      if(i>=0)paceEntries[i]=rec;else paceEntries.push(rec);
-      pc++;
-    }
-  });
-
-  entries.sort((a,b)=>a.year-b.year||a.month-b.month);
-  paceEntries.sort((a,b)=>a.year-b.year||a.month-b.month);
-  await saveEntries();
-  await savePaceEntries();
-
-  const dc=await commitDailyRows();
-
-  msg.textContent=`✓ Imported ${ac} actual month(s) and ${pc} pace snapshot(s)`+(dc?`, plus ${dc} daily record(s).`:'.');
-
-  // Hide preview but keep success message visible
-  document.getElementById('csvMultiPreview').style.display='none';
-  document.getElementById('csvFileMsg').textContent='';
-  document.getElementById('csvFile').value='';
-  pendingMonthlyAggregates=[];
-
-  // Show persistent banner
-  const banner=document.getElementById('csvStatusBanner');
-  banner.textContent=msg.textContent;
-  banner.style.display='block';
-  banner.scrollIntoView({behavior:'smooth',block:'nearest'});
-  render();
+/* csvMultiConfirmBtn — elements removed from UI, stub kept for safety */
+document.getElementById('csvMultiConfirmBtn')?.addEventListener('click',async()=>{
+  // No-op — CSV import moved to Data Upload tab
 });
 
 /* ─── Property setup ─── */
@@ -3296,6 +3145,63 @@ document.getElementById('finActualsSaveBtn').addEventListener('click',async()=>{
   ['fa-year','fa-month','fa-roomfees','fa-restaurant','fa-parking','fa-misc'].forEach(id=>{document.getElementById(id).value='';});
   renderFinancials();
 });
+/* ── Upload history logs (localStorage-backed) ── */
+let botbCurrentLog = [];
+let botbHistLog    = [];
+let prodLog        = [];
+
+function loadUploadLogs(){
+  try{ botbCurrentLog = JSON.parse(localStorage.getItem('hd_ul_botb_cur')||'[]'); }catch(e){ botbCurrentLog=[]; }
+  try{ botbHistLog    = JSON.parse(localStorage.getItem('hd_ul_botb_hist')||'[]'); }catch(e){ botbHistLog=[]; }
+  try{ prodLog        = JSON.parse(localStorage.getItem('hd_ul_prod')||'[]'); }catch(e){ prodLog=[]; }
+}
+function saveUploadLog(key, arr){
+  try{ localStorage.setItem(key, JSON.stringify(arr.slice(0,50))); }catch(e){}
+}
+
+function addUploadLogEntry(log, key, entry){
+  log.unshift({ id: Date.now().toString(36), uploadedAt: new Date().toISOString(), ...entry });
+  if(log.length > 50) log.splice(50);
+  saveUploadLog(key, log);
+}
+
+function renderUploadLog(logArr, bodyId, histId, rowFn){
+  const histEl = document.getElementById(histId);
+  const body   = document.getElementById(bodyId);
+  if(!histEl || !body) return;
+  histEl.style.display = logArr.length ? 'block' : 'none';
+  body.innerHTML = '';
+  logArr.forEach(entry => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = rowFn(entry);
+    body.appendChild(tr);
+  });
+}
+
+function renderAllUploadLogs(){
+  renderUploadLog(botbCurrentLog, 'botbCurrentHistoryBody', 'botbCurrentHistory', e => `
+    <td>${new Date(e.uploadedAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</td>
+    <td style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:220px;" title="${e.filename||''}">${e.filename||'—'}</td>
+    <td class="num">${e.days||0}</td>
+    <td class="num">${e.months||0}</td>
+    <td><span style="font-size:0.68rem;background:var(--green-soft);color:var(--good);padding:1px 6px;border-radius:3px;font-weight:700;">${e.errors?'Partial':'✓ OK'}</span></td>
+  `);
+  renderUploadLog(botbHistLog, 'botbHistHistoryBody', 'botbHistHistory', e => `
+    <td>${new Date(e.uploadedAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</td>
+    <td style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:220px;" title="${e.filename||''}">${e.filename||'—'}</td>
+    <td class="num">${e.newDays||0}</td>
+    <td class="num" style="color:var(--ink-soft);">${e.skipped||0}</td>
+    <td><span style="font-size:0.68rem;background:var(--green-soft);color:var(--good);padding:1px 6px;border-radius:3px;font-weight:700;">${e.errors?'Partial':'✓ OK'}</span></td>
+  `);
+  renderUploadLog(prodLog, 'prodHistoryBody', 'prodHistory', e => `
+    <td>${new Date(e.uploadedAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</td>
+    <td style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px;" title="${e.filename||''}">${e.filename||'—'}</td>
+    <td>${e.weekLabel||'—'}</td>
+    <td class="num">${e.planCount||'—'}</td>
+    <td><span style="font-size:0.68rem;background:var(--green-soft);color:var(--good);padding:1px 6px;border-radius:3px;font-weight:700;">${e.errors?'Partial':'✓ OK'}</span></td>
+  `);
+}
+
 /* ════════════════════════════════════════
    DATA UPLOAD TAB
    Direct CSV upload tab.
@@ -3407,6 +3313,16 @@ async function handleBotBCurrentUpload(files){
   await savePaceEntries();
   render();
 
+  // Log the upload
+  files.forEach((file, i) => {
+    if(statuses[i]?.type === 'ok') {
+      addUploadLogEntry(botbCurrentLog, 'hd_ul_botb_cur', {
+        filename: file.name, days: totalDays, months: totalMonths, errors: errors.length
+      });
+    }
+  });
+  renderAllUploadLogs();
+
   if(errors.length && totalDays===0){
     showUploadResult('botbCurrentResult','error',`Import failed: ${errors[0]}`);
   } else {
@@ -3467,6 +3383,16 @@ async function handleBotBHistUpload(files){
   await saveEntries();
   render();
 
+  // Log each successfully imported file
+  files.forEach((file, i) => {
+    if(statuses[i]?.type === 'ok') {
+      addUploadLogEntry(botbHistLog, 'hd_ul_botb_hist', {
+        filename: file.name, newDays: totalDays, skipped, errors: errors.length
+      });
+    }
+  });
+  renderAllUploadLogs();
+
   showUploadResult('botbHistResult', errors.length&&totalDays===0?'error':'ok',
     `${totalDays} new days inserted, ${skipped} already existed${errors.length?` (${errors.length} error${errors.length>1?'s':''})`:''}.`,
     [{label:'New rows',val:totalDays.toLocaleString()},{label:'Skipped (exist)',val:skipped.toLocaleString()},{label:'Months added',val:updatedMonths.size},{label:'Files',val:files.length}]
@@ -3506,6 +3432,20 @@ async function handleProdUpload(files){
   await saveProdWeeks();
   const activeTab=document.querySelector('.tab-btn.active')?.dataset.tab;
   if(activeTab==='rate-audit') waitForChart(renderAudit);
+
+  // Log each successfully imported file
+  files.forEach((file, i) => {
+    if(statuses[i]?.type === 'ok') {
+      const week = prodWeeks.find(w => statuses[i]?.msg?.includes(w.label));
+      addUploadLogEntry(prodLog, 'hd_ul_prod', {
+        filename: file.name,
+        weekLabel: statuses[i]?.msg?.replace('✓ Week ','') || '—',
+        planCount: week ? Object.keys(week.plans||{}).length : '—',
+        errors: 0
+      });
+    }
+  });
+  renderAllUploadLogs();
 
   showUploadResult('prodResult', errors.length&&imported===0?'error':'ok',
     `${imported} week${imported!==1?'s':''} imported${errors.length?`, ${errors.length} error${errors.length>1?'s':''}`:''}.`,
@@ -3854,9 +3794,11 @@ document.getElementById('sendInviteBtn')?.addEventListener('click', async()=>{
   msg.className='invite-msg'; msg.textContent='Sending invite…';
   document.getElementById('sendInviteBtn').disabled=true;
   try{
-    await window.DB.inviteUser(email,role);
+    const result = await window.DB.inviteUser(email,role);
     msg.className='invite-msg ok';
-    msg.textContent=`✓ Invite sent to ${email}. They'll receive an email link to join.`;
+    msg.textContent = result.status==='added'
+      ? `✓ ${email} already has an account and has been added as ${role}.`
+      : `✓ Invite sent to ${email}. They'll receive a sign-in link to access this property's dashboard.`;
     document.getElementById('inviteEmail').value='';
     await loadTeamMembers();
   }catch(e){
@@ -4182,6 +4124,7 @@ function waitForChart(cb,tries=0){
   await loadProdWeeks();
   loadSTLYData(); // restore imported STLY reports — async, runs in background
   loadSTLYLog().then(()=>renderSTLYLog()); // restore + render upload history
+  loadUploadLogs(); // restore BotB and production upload logs
   if(totalRooms){
     document.getElementById('f-rooms').value=totalRooms;
     document.getElementById('roomsMsg').textContent=`Room-nights = ${totalRooms} rooms × days in month.`;
