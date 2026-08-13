@@ -157,7 +157,7 @@ window.generateReport = function(ctx) {
   /* MTD KPIs — only days elapsed so far this month */
   const todayDay = today.getDate();
   const mtdDays  = dailyEntries.filter(d=>d.year===curYear&&d.month===curMonth&&d.day<=todayDay);
-  cy = sectionLabel(cy, `${MONTHS[curMonth-1]} ${curYear} — Month to Date (${MONTHS[curMonth-1]} 1–${todayDay})`);
+  const mtdRev   = mtdDays.reduce((s,d)=>s+(parseFloat(d.revenue)||0),0);
   const mtdRms   = mtdDays.reduce((s,d)=>s+(parseInt(d.rms)||0),0);
   const mtdOccS  = mtdDays.reduce((s,d)=>s+(parseFloat(d.occ)||0),0);
   const mtdADR   = mtdRms>0 ? mtdRev/mtdRms : 0;
@@ -165,7 +165,7 @@ window.generateReport = function(ctx) {
   const mtdArn   = rooms&&mtdDays.length ? rooms*mtdDays.length : null;
   const mtdRvPAR = mtdArn ? mtdRev/mtdArn : null;
 
-  const lyMTD    = dailyEntries.filter(d=>d.year===curYear-1&&d.month===curMonth&&d.day<=today.getDate());
+  const lyMTD    = dailyEntries.filter(d=>d.year===curYear-1&&d.month===curMonth&&d.day<=todayDay);
   const lyMRev   = lyMTD.reduce((s,d)=>s+(parseFloat(d.revenue)||0),0);
   const lyMRms   = lyMTD.reduce((s,d)=>s+(parseInt(d.rms)||0),0);
   const lyMOccS  = lyMTD.reduce((s,d)=>s+(parseFloat(d.occ)||0),0);
@@ -173,6 +173,8 @@ window.generateReport = function(ctx) {
   const lyMOcc   = lyMTD.length?lyMOccS/lyMTD.length:0;
   const lyMArn   = rooms&&lyMTD.length?rooms*lyMTD.length:null;
   const lyMRvPAR = lyMArn?lyMRev/lyMArn:null;
+
+  cy = sectionLabel(cy, `${MONTHS[curMonth-1]} ${curYear} — Month to Date (${MONTHS[curMonth-1]} 1–${todayDay})`);
 
   const tw = CW/4;
   kpiTile(ML,       cy, tw, 24, 'MTD REVENUE',   mtdRev>0?fmtMoney(mtdRev):'—',     lyMRev>0?fmtMoney(lyMRev):null);
