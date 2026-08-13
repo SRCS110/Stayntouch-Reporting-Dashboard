@@ -1794,11 +1794,11 @@ function renderForecast(){
 ════════════════════════════════════════ */
 
 function parseSTLYReport(text){
-  // Parse CSV rows — we only need the first 8 rows
-  const lines=text.split(/\r?\n/).slice(0,10);
+  const lines = text.split(/\r?\n/);
+
+  // ── Summary header (rows 1-8): Total Revenue and Room Nights ──
   let totalRevenue=null, roomNights=null;
-  for(const line of lines){
-    // Match: "","Total Revenue",97039.0 or "","Room Nights",510
+  for(const line of lines.slice(0,10)){
     const revMatch=line.match(/Total Revenue[",\s]+([0-9.]+)/i);
     if(revMatch) totalRevenue=parseFloat(revMatch[1]);
     const rmsMatch=line.match(/Room Nights[",\s]+([0-9.]+)/i);
@@ -1807,7 +1807,90 @@ function parseSTLYReport(text){
   if(totalRevenue===null||roomNights===null){
     throw new Error('Could not find Total Revenue or Room Nights in the report header. Make sure you\'re uploading a "Reservations by User by Date Range" export from StayNTouch.');
   }
-  return { roomNights, totalRevenue };
+
+  // ── Parse date ranges from data rows (row 9 = header, row 10+ = data) ──
+  // Col H (index 7) = Arrival Date, Col R (index 17) = Created Date
+  // Format: MM-DD-YYYY
+
+  function parseCSVLine(line){
+    // Simple CSV split respecting quotes
+    const result=[], re=/("(?:[^"]|"")*"|[^,]*)/g;
+    let m;
+    while((m=re.exec(line))!==null){
+      let v=m[1];
+      if(v.startsWith('"')&&v.endsWith('"')) v=v.slice(1,-1).replace(/""/g,'"');
+      result.push(v.trim());
+    }
+    return result;
+  }
+
+  function parseMDY(str){
+    // MM-DD-YYYY → Date
+    if(!str||!str.match(/\d{2}-\d{2}-\d{4}/)) return null;
+    const [mm,dd,yyyy]=str.split('-').map(Number);
+    return new Date(yyyy,mm-1,dd);
+  }
+
+  function fmtDate(d){
+    if(!d) return null;
+    return d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+  }
+
+  let arrivalMin=null, arrivalMax=null, creationFirst=null, creationLast=null;
+  let headerFound=false;
+  let arrivalCol=-1, createdCol=-1;
+
+  for(let i=0;i<lines.length;i++){
+    const line=lines[i];
+    if(!line.trim()) continue;
+    const cols=parseCSVLine(line);
+
+    // Find the header row (row 9) by looking for "Arrival Date" column
+    if(!headerFound){
+      const lower=cols.map(c=>c.toLowerCase());
+      const aIdx=lower.findIndex(c=>c.includes('arrival date'));
+      const cIdx=lower.findIndex(c=>c.includes('created date')||c.includes('creation date'));
+      if(aIdx!==-1&&cIdx!==-1){
+        arrivalCol=aIdx; createdCol=cIdx; headerFound=true;
+      }
+      continue;
+    }
+
+    // Data rows — track min/max arrival, first/last creation on the fly
+    // Never accumulate full row data — discard immediately after extraction
+    if(cols.length>Math.max(arrivalCol,createdCol)){
+      const arrDate=parseMDY(cols[arrivalCol]);
+      const crtDate=parseMDY(cols[createdCol]);
+      if(arrDate){
+        if(!arrivalMin||arrDate<arrivalMin) arrivalMin=arrDate;
+        if(!arrivalMax||arrDate>arrivalMax) arrivalMax=arrDate;
+      }
+      if(crtDate){
+        if(!creationFirst) creationFirst=crtDate; // first seen = earliest
+        creationLast=crtDate;                      // keep overwriting = latest
+      }
+    }
+  }
+
+  // Arrival range = min to max
+  const arrivalFrom = arrivalMin || null;
+  const arrivalTo   = arrivalMax || null;
+
+  // Creation range = first to last
+  const createdFrom = creationFirst || null;
+  const createdTo   = creationLast  || null;
+
+  return {
+    roomNights,
+    totalRevenue,
+    arrivalFrom:  fmtDate(arrivalFrom),
+    arrivalTo:    fmtDate(arrivalTo),
+    createdFrom:  fmtDate(createdFrom),
+    createdTo:    fmtDate(createdTo),
+    // Keep legacy fields for backward compat
+    arrivalMonth: arrivalFrom ? arrivalFrom.getMonth()+1 : null,
+    arrivalYear:  arrivalFrom ? arrivalFrom.getFullYear() : null,
+  };
 }
 
 /* ── STLY upload log state ── */
@@ -1962,7 +2045,9 @@ async function renderSTLY(){
   const lyStatus=document.getElementById('stlyLyStatus');
   if(curStatus){
     if(stlyData.current){
-      curStatus.textContent=`✓ Loaded — ${Math.round(stlyData.current.roomNights)} room nights, ${fmtMoney(stlyData.current.totalRevenue)}`;
+      const d=stlyData.current;
+      const rangeStr=d.arrivalFrom&&d.arrivalTo?` · Arrivals ${d.arrivalFrom} → ${d.arrivalTo}`:'';
+      curStatus.textContent=`✓ ${Math.round(d.roomNights)} rm nights, ${fmtMoney(d.totalRevenue)}${rangeStr}`;
       curStatus.className='sil-status loaded';
     } else {
       curStatus.textContent='No file loaded — upload Reservations by User report';
@@ -1971,7 +2056,9 @@ async function renderSTLY(){
   }
   if(lyStatus){
     if(stlyData.prior){
-      lyStatus.textContent=`✓ Loaded — ${Math.round(stlyData.prior.roomNights)} room nights, ${fmtMoney(stlyData.prior.totalRevenue)}`;
+      const d=stlyData.prior;
+      const rangeStr=d.arrivalFrom&&d.arrivalTo?` · Arrivals ${d.arrivalFrom} → ${d.arrivalTo}`:'';
+      lyStatus.textContent=`✓ ${Math.round(d.roomNights)} rm nights, ${fmtMoney(d.totalRevenue)}${rangeStr}`;
       lyStatus.className='sil-status loaded';
     } else {
       lyStatus.textContent='No file loaded — upload prior year report';
@@ -1982,15 +2069,30 @@ async function renderSTLY(){
     importCard.classList.toggle('has-data', !!(stlyData.current&&stlyData.prior));
   }
 
-  // Date window labels
-  const curFrom=`${today.getFullYear()-1}-${pad(today.getMonth()+1)}-${pad(today.getDate())}`;
-  const curTo=`${today.getFullYear()}-${pad(today.getMonth()+1)}-${pad(today.getDate())}`;
-  const lyFrom=`${today.getFullYear()-2}-${pad(today.getMonth()+1)}-${pad(today.getDate())}`;
-  const lyTo=`${today.getFullYear()-1}-${pad(today.getMonth()+1)}-${pad(today.getDate())}`;
+  // Build subtitle from actual parsed date ranges in the files
+  function dateRangeLabel(data){
+    if(!data) return null;
+    const parts=[];
+    if(data.createdFrom&&data.createdTo)
+      parts.push(`Created ${data.createdFrom} → ${data.createdTo}`);
+    if(data.arrivalFrom&&data.arrivalTo)
+      parts.push(`Arrivals ${data.arrivalFrom} → ${data.arrivalTo}`);
+    return parts.join(' · ');
+  }
 
-  if(subEl) subEl.textContent=stlyData.current||stlyData.prior
-    ?`Created ${curFrom} → ${curTo} vs ${lyFrom} → ${lyTo} | Arrivals ${arrMonthName}`
-    :'Upload the two Reservations by User reports to populate this section.';
+  const curLabel  = dateRangeLabel(stlyData.current);
+  const lyLabel   = dateRangeLabel(stlyData.prior);
+
+  if(subEl){
+    if(stlyData.current||stlyData.prior){
+      const lines=[];
+      if(curLabel)  lines.push(`Current year — ${curLabel}`);
+      if(lyLabel)   lines.push(`Prior year — ${lyLabel}`);
+      subEl.textContent = lines.join('  |  ');
+    } else {
+      subEl.textContent = 'Upload the two Reservations by User reports to populate this section.';
+    }
+  }
 
   if(!stlyData.current&&!stlyData.prior){
     if(titleEl) titleEl.textContent=`${arrMonthName} ${arrYear} Booking Pace — Upload reports above`;
@@ -1998,18 +2100,37 @@ async function renderSTLY(){
     return;
   }
 
-  if(titleEl) titleEl.textContent=`${arrMonthName} ${arrYear} — Booking Pace vs. Same Time Last Year`;
+  // Title — use actual arrival range from files if available
+  const curArrRange = stlyData.current?.arrivalFrom && stlyData.current?.arrivalTo
+    ? `${stlyData.current.arrivalFrom} → ${stlyData.current.arrivalTo}`
+    : stlyData.prior?.arrivalFrom && stlyData.prior?.arrivalTo
+    ? `${stlyData.prior.arrivalFrom} → ${stlyData.prior.arrivalTo}`
+    : `${arrMonthName} ${arrYear} Arrivals`;
+
+  if(titleEl) titleEl.textContent = `Booking Pace — ${curArrRange}`;
 
   const cur=stlyData.current;
   const ly=stlyData.prior;
 
+  // Use actual days from parsed arrival range, fall back to calendar month
+  function calcDays(data){
+    if(data?.arrivalFrom&&data?.arrivalTo){
+      const from=new Date(data.arrivalFrom);
+      const to=new Date(data.arrivalTo);
+      if(!isNaN(from)&&!isNaN(to)) return Math.round((to-from)/(1000*60*60*24))+1;
+    }
+    return arrDays; // fallback to next calendar month
+  }
+  const curDays = calcDays(cur);
+  const lyDays2 = calcDays(ly);
+
   // Calculate derived metrics
-  const curADR  = cur&&cur.roomNights>0 ? cur.totalRevenue/cur.roomNights : null;
-  const lyADR   = ly&&ly.roomNights>0   ? ly.totalRevenue/ly.roomNights   : null;
-  const curRevPAR = cur&&totalRooms ? cur.totalRevenue/(totalRooms*days)   : null;
-  const lyRevPAR  = ly&&totalRooms  ? ly.totalRevenue/(totalRooms*daysLY)  : null;
-  const curOcc  = cur&&totalRooms ? (cur.roomNights/(totalRooms*days))*100   : null;
-  const lyOcc   = ly&&totalRooms  ? (ly.roomNights/(totalRooms*daysLY))*100  : null;
+  const curADR    = cur&&cur.roomNights>0 ? cur.totalRevenue/cur.roomNights : null;
+  const lyADR     = ly&&ly.roomNights>0   ? ly.totalRevenue/ly.roomNights   : null;
+  const curRevPAR = cur&&totalRooms ? cur.totalRevenue/(totalRooms*curDays)  : null;
+  const lyRevPAR  = ly&&totalRooms  ? ly.totalRevenue/(totalRooms*lyDays2)   : null;
+  const curOcc    = cur&&totalRooms ? (cur.roomNights/(totalRooms*curDays))*100 : null;
+  const lyOcc     = ly&&totalRooms  ? (ly.roomNights/(totalRooms*lyDays2))*100  : null;
 
   function stlyVar(c,l){
     if(c===null||c===undefined||!l)return null;
@@ -2038,10 +2159,10 @@ async function renderSTLY(){
       fmtMoney)+
     stlyCell('ADR (Revenue ÷ Rm Nights)',
       curADR, lyADR, fmtMoney2)+
-    stlyCell(`Occupancy (${totalRooms?totalRooms+'rms × '+days+'d':'set room count'})`,
+    stlyCell(`Occupancy (${totalRooms?totalRooms+'rms × '+curDays+'d':'set room count'})`,
       curOcc, lyOcc,
       n=>n.toFixed(1)+'%')+
-    stlyCell(`RevPAR (Rev ÷ ${totalRooms||'?'}rms × ${days}d)`,
+    stlyCell(`RevPAR (Rev ÷ ${totalRooms||'?'}rms × ${curDays}d)`,
       curRevPAR, lyRevPAR, fmtMoney2)+
     (()=>{
       // Pace % = current rev on books vs LY rev on books
