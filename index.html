@@ -1813,14 +1813,22 @@ function parseSTLYReport(text){
   // Format: MM-DD-YYYY
 
   function parseCSVLine(line){
-    // Simple CSV split respecting quotes
-    const result=[], re=/("(?:[^"]|"")*"|[^,]*)/g;
-    let m;
-    while((m=re.exec(line))!==null){
-      let v=m[1];
-      if(v.startsWith('"')&&v.endsWith('"')) v=v.slice(1,-1).replace(/""/g,'"');
-      result.push(v.trim());
+    // Reliable CSV parser — handles quoted fields with commas and escaped quotes
+    const result = [];
+    let cur = '', inQuotes = false;
+    for(let i=0; i<line.length; i++){
+      const ch = line[i];
+      if(inQuotes){
+        if(ch==='"' && line[i+1]==='"'){ cur+='"'; i++; } // escaped quote
+        else if(ch==='"'){ inQuotes=false; }
+        else { cur+=ch; }
+      } else {
+        if(ch==='"'){ inQuotes=true; }
+        else if(ch===','){ result.push(cur.trim()); cur=''; }
+        else { cur+=ch; }
+      }
     }
+    result.push(cur.trim()); // last field
     return result;
   }
 
