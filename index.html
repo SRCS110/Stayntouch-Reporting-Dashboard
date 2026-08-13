@@ -1498,6 +1498,7 @@ function auditPctHTML(cur,prior){
 /* ─── Month selects ─── */
 function populateMonthSelect(id){
   const sel=document.getElementById(id);
+  if(!sel) return; // element may have been removed from UI
   MONTHS.forEach((m,i)=>{const o=document.createElement('option');o.value=i+1;o.textContent=m;sel.appendChild(o);});
 }
 
@@ -4093,7 +4094,6 @@ function waitForChart(cb,tries=0){
 (async function init(){
   populateMonthSelect('f-month');
   populateMonthSelect('p-month');
-  populateMonthSelect('c-month');
   populateMonthSelect('fb-month');
   populateMonthSelect('fa-month');
 
